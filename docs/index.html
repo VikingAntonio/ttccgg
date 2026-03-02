@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style2.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- Floating User Panel -->
+    <div class="floating-control-panel" id="top-panel">
+        <div class="cart-container-panel">
+            <a href="carrito.html" class="user-avatar-btn" id="cart-btn" title="Ver Carrito">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </a>
+        </div>
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <img id="dropdown-user-logo" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: none;">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Invitado</div>
+                    <div class="user-dropdown-role" id="dropdown-user-role" style="display: none;">Invitado</div>
+                </div>
+                <div id="auth-menu-items">
+                    <!-- Dynamic login/logout items -->
+                </div>
+                <!-- Theme switcher removed for index2.html -->
+            </div>
+        </div>
+    </div>
+
+    <header class="main-nav">
+        <div class="nav-container">
+            <a href="index2.html" class="logo">Vikingdev <span>TCG</span></a>
+        </div>
+    </header>
+
+    <!-- Auth Modal (Login / Register) -->
+    <div id="auth-modal" class="overlay">
+        <div class="overlay-content login-container">
+            <span class="close-btn" id="close-auth-modal">&times;</span>
+
+            <!-- Login View -->
+            <div id="login-view">
+                <h1 style="text-align: center; margin-bottom: 24px;">Iniciar Sesión</h1>
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <input type="text" id="login-username" placeholder="Tu nombre de usuario">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-password" placeholder="********">
+                </div>
+                <button id="btn-login" class="btn">Entrar</button>
+                <p style="text-align: center; font-size: 0.9rem; color: #888; margin-top: 16px;">
+                    ¿Olvidaste tu contraseña? <a href="#" id="link-show-forgot" style="color: var(--primary); text-decoration: none; font-weight: bold;">Restablécela aquí</a>
+                </p>
+                <p style="text-align: center; font-size: 0.9rem; color: #888; margin-top: 8px;">
+                    ¿No tienes cuenta? <a href="#" id="link-show-register" style="color: var(--primary); text-decoration: none; font-weight: bold;">Regístrate</a>
+                </p>
+            </div>
+
+            <!-- Register View -->
+            <div id="register-view" style="display: none;">
+                <h1 style="text-align: center; margin-bottom: 24px;">Crear Cuenta</h1>
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="reg-email" placeholder="tu@correo.com">
+                </div>
+                <div class="form-group">
+                    <label>Nombre de Usuario</label>
+                    <input type="text" id="reg-username" placeholder="usuario123">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="reg-password" placeholder="********">
+                </div>
+                <button id="btn-register" class="btn">Registrarse</button>
+                <p style="text-align: center; font-size: 0.9rem; color: #888; margin-top: 16px;">
+                    ¿Ya tienes cuenta? <a href="#" id="link-show-login" style="color: var(--primary); text-decoration: none; font-weight: bold;">Inicia Sesión</a>
+                </p>
+            </div>
+
+            <!-- Forgot Password View -->
+            <div id="forgot-view" style="display: none;">
+                <h1 style="text-align: center; margin-bottom: 24px;">Restablecer Contraseña</h1>
+                <p style="text-align: center; font-size: 0.9rem; color: #888; margin-bottom: 24px;">
+                    Introduce tu nombre de usuario y te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <input type="text" id="forgot-username" placeholder="Tu nombre de usuario">
+                </div>
+                <button id="btn-forgot-password" class="btn">Enviar Enlace</button>
+                <p style="text-align: center; font-size: 0.9rem; color: #888; margin-top: 16px;">
+                    ¿Recordaste tu contraseña? <a href="#" id="link-forgot-to-login" style="color: var(--primary); text-decoration: none; font-weight: bold;">Inicia Sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Organiza. Muestra. <span>Comparte.</span></h1>
+            <p class="hero-subtitle">Todo lo que necesitas para gestionar tus colecciones con estilo.</p>
+            <div class="hero-cta">
+                <a href="#join-section" class="btn-primary">Registrarse</a>
+                <a href="#stores" class="btn-outline">Ver Tiendas</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="card-3d-container foil active" id="hero-card">
+                <div class="card-3d">
+                    <img src="https://tcgplayer-cdn.tcgplayer.com/product/58518_in_1000x1000.jpg" alt="Carta Hero" id="expanded-image">
+                    <div class="holo-layer"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="stores" class="stores-section">
+        <h2 class="section-title">Tiendas que confían en <span>nosotros</span></h2>
+        <div class="swiper logos-swiper">
+            <div class="swiper-wrapper" id="stores-slider-wrapper">
+                <!-- Stores will be loaded here -->
+            </div>
+            <div class="swiper-pagination"></div>
+        </div>
+    </section>
+
+    <main id="features" class="landing-container">
+        <h2 class="section-title">Visualización <span>Optimizada</span></h2>
+        <div class="bento-grid">
+            <div class="bento-item large">
+                <div class="bento-content">
+                    <i class="fas fa-eye"></i>
+                    <h3>Tus Productos Deluxe</h3>
+                    <p>Crea, organiza y diseña Binders, decks, producto sellado, cajas de singles con nuestro sistema optimizado</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <div class="bento-content">
+                    <i class="fas fa-search"></i>
+                    <h3>Búsqueda instantánea</h3>
+                    <p>Encuentra cualquier carta en segundos. Filtra por nombre, expansión o rareza de forma instantánea.</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <div class="bento-content">
+                    <i class="fas fa-share-alt"></i>
+                    <h3>Comparte</h3>
+                    <p>Genera enlaces públicos personalizados para mostrar tu inventario a clientes o amigos de forma profesional.</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="contact-banner">
+            <div class="contact-content">
+                <model-viewer src="https://vikingantonio.github.io/vikingdev3D/assets/letrasVIKINGDEVfb.glb" auto-rotate camera-controls disable-zoom interaction-prompt="none" shadow-intensity="1" class="contact-logo" oncontextmenu="return false;"></model-viewer>
+                <div class="contact-text">
+                    <h2>¿Tienes una propuesta o quieres colaborar con nosotros?</h2>
+                    <p>Estamos abiertos a escuchar tus ideas, propuestas de negocio o simplemente saludarnos. ¡Hablemos!</p>
+                    <a href="https://m.me/vikingdevtj" target="_blank" class="btn-primary">Contactarnos</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="donation-banner">
+            <div class="donation-content">
+                <div class="donation-text">
+                    <h2>Sumate a vikingdev</h2>
+                    <p>Si nuestro proyecto te ha sido útil o quieres ayudarnos a crecer, tu apoyo voluntario nos permite seguir innovando y trayendo nuevas funciones para todos. ¡Cada donación hace la diferencia!</p>
+                    <a href="https://link.mercadopago.com.mx/vikingdevtcg" target="_blank" rel="noopener noreferrer" class="btn-secondary">Apoyar el Proyecto</a>
+                </div>
+                <div class="donation-icon-container">
+                    <i class="fas fa-heart"></i>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-banner" id="join-section">
+            <h2>¿Listo para empezar?</h2>
+            <p>Únete a la nueva era de coleccionismo digital hoy mismo.</p>
+            <button id="btn-cta-register" class="btn" style="width: auto; padding-left: 48px; padding-right: 48px;">Crear mi Cuenta Gratis</button>
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2020-<span id="current-year"></span> vikingdev - Todos los derechos reservados.
+        <script>document.getElementById('current-year').textContent = new Date().getFullYear();</script>
+    </footer>
+
+    <!-- Business Card Modal -->
+    <div id="business-modal" class="business-overlay">
+        <div class="business-card-modal">
+            <span class="close-business-modal" onclick="closeBusinessModal()">&times;</span>
+            <div style="text-align: center;">
+                <img id="modal-business-logo" src="https://midominio.com/placeholder-logo.png" alt="Logo">
+                <h2 id="modal-business-name" style="margin-bottom: 32px;">Nombre del Negocio</h2>
+            </div>
+            <div class="modal-body">
+                <div id="modal-address-container" style="margin-bottom: 24px;">
+                    <p style="font-size: 0.9rem; color: #888; margin-bottom: 4px;">Ubicación</p>
+                    <p id="modal-business-address" style="font-weight: 500;">Dirección no disponible</p>
+                </div>
+                <div id="modal-hours-container" style="margin-bottom: 32px;">
+                    <p style="font-size: 0.9rem; color: #888; margin-bottom: 4px;">Horario</p>
+                    <p id="modal-business-hours" style="font-weight: 500;">Horario no disponible</p>
+                </div>
+                <div style="text-align: center;">
+                    <a id="modal-business-link" href="#" target="_blank" class="btn-primary" style="display: block; text-align: center;">Visitar Tienda</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Librerías -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/landing2.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</body>
+</html>

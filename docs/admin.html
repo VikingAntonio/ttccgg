@@ -1,0 +1,741 @@
+<!DOCTYPE html>    
+<html lang="es">    
+<head>    
+    <meta charset="UTF-8">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tcgdex/sdk@2/dist/tcgdex.browser.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+</head>    
+<body>    
+    <!-- Floating User Panel -->
+    <div class="top-left-panel" id="top-panel" style="display: none;">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <img id="dropdown-user-logo" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: none;">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Usuario</div>
+                    <div class="user-dropdown-role" id="dropdown-user-role" style="display: none;">Admin</div>
+                </div>
+                <a href="#" class="menu-item" id="menu-btn-home"><i class="fas fa-home"></i> Mi Panel</a>
+                <a href="play.html" class="menu-item"><i class="fas fa-gamepad"></i> Play!</a>
+                <a href="#" class="menu-item" id="menu-btn-albums"><i class="fas fa-book"></i> Mis Álbumes</a>
+                <a href="#" class="menu-item" id="menu-btn-decks"><i class="fas fa-layer-group"></i> Mis Decks</a>
+                <a href="scanner.html" class="menu-item"><i class="fas fa-barcode"></i> Scanner de Cartas</a>
+                <a href="#" class="menu-item" id="menu-btn-spirits"><i class="fas fa-ghost"></i> Compañeros</a>
+                <a href="deseos.html" class="menu-item"><i class="fas fa-heart"></i> Deseos</a>
+                <a href="eventos.html" class="menu-item" id="menu-btn-eventos"><i class="fas fa-calendar-alt"></i> Eventos</a>
+                <div class="menu-item theme-menu-container">
+                    <i class="fas fa-palette"></i>
+                    <div class="theme-switcher-inline">
+                        <button class="theme-btn-small" data-theme="theme-light" title="Modo Claro"></button>
+                        <button class="theme-btn-small" data-theme="theme-medium" title="Modo Medio"></button>
+                        <button class="theme-btn-small" data-theme="theme-dark" title="Modo Oscuro"></button>
+                    </div>
+                </div>
+                <a href="#" class="menu-item logout" id="menu-btn-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </div>
+        <div class="cart-container-panel">
+            <a href="carrito.html" class="user-avatar-btn" id="cart-btn" title="Ver Carrito">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="overlay">
+        <div class="overlay-content login-container">
+            <h1>Iniciar Sesión</h1>
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="login-username" placeholder="Tu nombre de usuario">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="login-password" placeholder="********">
+            </div>
+            <button id="btn-login" class="btn" style="width: 100%; margin-bottom: 15px;">Entrar</button>
+        </div>
+    </div>
+
+    <!-- Authenticated Content -->
+    <div id="authenticated-content" style="display: none; width: 100%; max-width: 1200px; margin: 0 auto;">
+
+        <!-- Main Admin Navigation (Dashboard) -->
+        <div id="view-main-dashboard" class="admin-section active">
+            <div class="admin-header">
+                <h1 id="welcome-message">Panel de Control</h1>
+                <div id="upgrade-button-container" style="margin-bottom: 20px;"></div>
+                <div id="store-link-container"></div>
+            </div>
+
+            <div class="tile-grid">
+                <a href="#" class="tile tile-blue" id="btn-home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="perfil.html" class="tile tile-cyan" id="btn-perfil">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Mi Perfil</span>
+                </a>
+                <a href="#" class="tile tile-purple" id="btn-show-albums">
+                    <i class="fas fa-book"></i>
+                    <span>Mis Álbumes</span>
+                </a>
+                <a href="#" class="tile tile-green" id="btn-show-decks">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Mis Decks</span>
+                </a>
+                <a href="#" class="tile tile-yellow" id="btn-show-spirits">
+                    <i class="fas fa-ghost"></i>
+                    <span>Compañero</span>
+                </a>
+                <a href="scanner.html" class="tile tile-orange" id="btn-scanner">
+                    <i class="fas fa-barcode"></i>
+                    <span>Scanner</span>
+                </a>
+                <a href="users.html" class="tile tile-pink" id="btn-users-panel" style="display:none;">
+                    <i class="fas fa-users"></i>
+                    <span>Usuarios</span>
+                </a>
+                <a href="deseos.html" class="tile tile-blue" id="btn-deseos">
+                    <i class="fas fa-heart"></i>
+                    <span>Deseos</span>
+                </a>
+                <a href="productoSellado.html" class="tile tile-cyan" id="btn-sealed">
+                    <i class="fas fa-box"></i>
+                    <span>Producto Sellado</span>
+                </a>
+                <a href="preventas.html" class="tile tile-yellow" id="btn-preventas">
+                    <i class="fas fa-fire"></i>
+                    <span>Preventas</span>
+                </a>
+                <a href="tracking.html" class="tile tile-blue" id="btn-tracking" style="display:none;">
+                    <i class="fas fa-shipping-fast"></i>
+                    <span>Tracking</span>
+                </a>
+                <a href="clientes.html" class="tile tile-green" id="btn-clientes" style="display:none;">
+                    <i class="fas fa-address-book"></i>
+                    <span>Clientes</span>
+                </a>
+                <a href="subastas.html" class="tile tile-purple" id="btn-subastas" style="display:none;">
+                    <i class="fas fa-gavel"></i>
+                    <span>Subastas</span>
+                </a>
+                <a href="eventos.html" class="tile tile-cyan" id="btn-eventos" style="display:none;">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Eventos</span>
+                </a>
+                <a href="#" class="tile tile-purple" id="btn-chatbot-config">
+                    <i class="fas fa-robot"></i>
+                    <span>Chatbot</span>
+                </a>
+                <a href="#" class="tile tile-pink" id="btn-logout-tile">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Dashboard View (Albums) -->
+        <div id="view-dashboard" class="admin-section" style="display:none;">
+            <div class="admin-header">
+                <button id="btn-back-to-main" class="btn btn-secondary" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Volver al Panel</button>
+                <h1>Mis Álbumes</h1>
+                <button id="btn-create-album" class="btn"><i class="fas fa-plus"></i> Crear Nuevo Álbum</button>
+            </div>
+            <div id="album-list" class="album-list">
+                <!-- Albums will be loaded here -->
+                <div class="loading">Cargando álbumes...</div>
+            </div>
+        </div>
+
+        <!-- Decks View -->
+        <div id="view-decks" class="admin-section" style="display:none;">
+            <div class="admin-header">
+                <button class="btn btn-secondary btn-back-main" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Volver al Panel</button>
+                <h1>Mis Decks</h1>
+                <button id="btn-create-deck" class="btn"><i class="fas fa-plus"></i> Crear Nuevo Deck</button>
+            </div>
+            <div id="deck-list" class="album-list">
+                <!-- Decks will be loaded here -->
+                <div class="loading">Cargando decks...</div>
+            </div>
+        </div>
+
+        <!-- Deck Editor View -->
+        <div id="view-deck-editor" class="admin-section" style="display:none;">
+            <div class="admin-header">
+                <button id="btn-back-to-decks" class="btn btn-secondary" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Volver a Decks</button>
+                <h1 id="deck-editor-title">Editar Deck</h1>
+                <button id="btn-save-deck-meta" class="btn"><i class="fas fa-save"></i> Guardar Nombre</button>
+            </div>
+
+            <div class="album-card" style="max-width: 600px; margin: 0 auto 40px;">
+                <div class="form-group">
+                    <label>Nombre del Deck</label>
+                    <input type="text" id="input-deck-name" placeholder="Nuevo Deck">
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <label class="switch">
+                        <input type="checkbox" id="input-deck-public" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <label style="margin-bottom: 0; cursor: pointer;" for="input-deck-public">Deck Público (Visible en el link)</label>
+                </div>
+                <div class="form-group" id="deck-total-price-display" style="margin-top: 10px; color: #00d2ff; font-weight: bold; padding: 0 15px;">
+                    Precio Total (Suma): <span id="deck-total-sum">$0.00</span>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <label class="switch">
+                        <input type="checkbox" id="input-deck-use-special">
+                        <span class="slider"></span>
+                    </label>
+                    <label style="margin-bottom: 0; cursor: pointer;" for="input-deck-use-special">Habilitar Precio Especial</label>
+                </div>
+                <div class="form-group" id="special-price-container" style="display: none; padding: 0 15px;">
+                    <label>Precio Especial</label>
+                    <input type="text" id="input-deck-special-price" placeholder="Ej: $100.00">
+                </div>
+            </div>
+
+            <div class="admin-header">
+                <h2><i class="fas fa-images"></i> Imágenes del Deck</h2>
+            </div>
+
+            <!-- External Card Search for Decks -->
+            <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <label><i class="fas fa-search"></i> Buscar y Añadir al Deck</label>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input type="text" id="deck-external-search-input" placeholder="Nombre o código de la carta..." style="flex: 1;">
+                    <button id="btn-deck-external-search" class="btn"><i class="fas fa-search"></i></button>
+                </div>
+                <div id="deck-external-search-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; margin-top: 15px; max-height: 160px; overflow-y: auto; padding: 5px; border-top: 1px solid #333;">
+                    <!-- Results will appear here -->
+                </div>
+            </div>
+
+            <div class="form-group" style="max-width: 600px; margin: 20px auto;">
+                <label>Añadir Imagen Directa (Drag & Drop)</label>
+                <div class="file-drop-zone" id="drop-zone-deck">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Arrastra una imagen aquí para añadirla al deck</p>
+                    <input type="file" id="input-deck-file" accept="image/*" style="display: none;">
+                    <div class="file-name" style="font-size: 12px; color: #00d2ff; margin-top: 5px;"></div>
+                </div>
+            </div>
+
+            <div class="deck-editor-controls">
+                <button onclick="showView('decks'); loadDecks();" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</button>
+            </div>
+
+            <div id="deck-card-list" class="album-list">
+                <!-- Deck cards will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Compañeros View -->
+        <div id="view-spirits" class="admin-section" style="display:none;">
+            <div class="admin-header">
+                <button class="btn btn-secondary btn-back-main" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Volver al Panel</button>
+                <h1>Mis Compañeros</h1>
+                <p>Elige un compañero que te acompañará mientras navegas por la web.</p>
+                <div id="admin-upload-container" style="display:none; margin-top: 20px;">
+                    <button id="btn-open-upload-spirit" class="btn"><i class="fas fa-upload"></i> Subir Nuevo Compañero</button>
+                </div>
+            </div>
+
+            <div id="spirits-grid" class="spirits-grid">
+                <!-- Compañeros will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Chatbot Config View -->
+        <div id="view-chatbot-config" class="admin-section" style="display:none;">
+            <div class="admin-header">
+                <button class="btn btn-secondary btn-back-main" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Volver al Panel</button>
+                <h1>Configuración del Chatbot</h1>
+                <p>Personaliza los mensajes automáticos para tus clientes.</p>
+            </div>
+
+            <div class="bot-config-layout">
+                <!-- Configuration Slots -->
+                <div class="bot-slots-container">
+
+                    <!-- Slot: Horario -->
+                    <div class="bot-slot-card" data-type="store_hours">
+                        <div class="bot-slot-header">
+                            <h3><i class="fas fa-clock"></i> Horario de la Tienda</h3>
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-slot">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenido del Mensaje</label>
+                            <textarea class="slot-content" placeholder="Ej: ¡Visítanos! Abrimos de Lunes a Viernes de 10am a 8pm."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Duración (segundos)</label>
+                            <input type="number" class="slot-duration" value="5" min="2" max="30">
+                        </div>
+                        <button class="btn btn-sm btn-save-slot"><i class="fas fa-save"></i> Guardar</button>
+                    </div>
+
+                    <!-- Slot: Ubicacion -->
+                    <div class="bot-slot-card" data-type="store_location">
+                        <div class="bot-slot-header">
+                            <h3><i class="fas fa-map-marker-alt"></i> Ubicación</h3>
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-slot">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenido del Mensaje</label>
+                            <textarea class="slot-content" placeholder="Ej: Encuéntranos en Av. Principal 123. ¡Te esperamos!"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Duración (segundos)</label>
+                            <input type="number" class="slot-duration" value="5" min="2" max="30">
+                        </div>
+                        <button class="btn btn-sm btn-save-slot"><i class="fas fa-save"></i> Guardar</button>
+                    </div>
+
+                    <!-- Slot: Carpeta -->
+                    <div class="bot-slot-card" data-type="album_link">
+                        <div class="bot-slot-header">
+                            <h3><i class="fas fa-book-open"></i> Ver una Carpeta</h3>
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-slot">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenido del Mensaje</label>
+                            <textarea class="slot-content" placeholder="Ej: ¿Te gustaría ver nuestra carpeta de Pokémon?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Seleccionar Álbum Destino</label>
+                            <select class="slot-redirect album-select">
+                                <option value="">Cargando álbumes...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Duración (segundos)</label>
+                            <input type="number" class="slot-duration" value="5" min="2" max="30">
+                        </div>
+                        <button class="btn btn-sm btn-save-slot"><i class="fas fa-save"></i> Guardar</button>
+                    </div>
+
+                    <!-- Slot: Preventas -->
+                    <div class="bot-slot-card" data-type="pre_sales">
+                        <div class="bot-slot-header">
+                            <h3><i class="fas fa-fire"></i> Preventas</h3>
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-slot">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenido del Mensaje</label>
+                            <textarea class="slot-content" placeholder="Ej: ¡Ya tenemos preventas disponibles para la nueva expansión!"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Enlace (Opcional)</label>
+                            <input type="text" class="slot-redirect" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>Duración (segundos)</label>
+                            <input type="number" class="slot-duration" value="5" min="2" max="30">
+                        </div>
+                        <button class="btn btn-sm btn-save-slot"><i class="fas fa-save"></i> Guardar</button>
+                    </div>
+
+                    <!-- Slot: Promo -->
+                    <div class="bot-slot-card" data-type="promo">
+                        <div class="bot-slot-header">
+                            <h3><i class="fas fa-tag"></i> Promociones</h3>
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-slot">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenido del Mensaje</label>
+                            <textarea class="slot-content" placeholder="Ej: ¡10% de descuento en cartas sueltas este fin de semana!"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Duración (segundos)</label>
+                            <input type="number" class="slot-duration" value="5" min="2" max="30">
+                        </div>
+                        <button class="btn btn-sm btn-save-slot"><i class="fas fa-save"></i> Guardar</button>
+                    </div>
+
+                    <!-- Slot: Custom 1 -->
+                    <div class="bot-slot-card" data-type="custom_1">
+                        <div class="bot-slot-header">
+                            <h3><i class="fas fa-comment"></i> Mensaje Personalizado 1</h3>
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-slot">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenido del Mensaje</label>
+                            <textarea class="slot-content" placeholder="Ej: ¡Síguenos en nuestras redes sociales!"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Enlace (Opcional)</label>
+                            <input type="text" class="slot-redirect" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>Duración (segundos)</label>
+                            <input type="number" class="slot-duration" value="5" min="2" max="30">
+                        </div>
+                        <button class="btn btn-sm btn-save-slot"><i class="fas fa-save"></i> Guardar</button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Album Editor View -->
+        <div id="view-editor" class="admin-section" style="display:none;">
+            <div class="admin-header">
+                <button id="btn-back-to-albums" class="btn btn-secondary" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Volver a Álbumes</button>
+                <h1 id="editor-title">Editar Álbum</h1>
+                <button id="btn-save-album-meta" class="btn"><i class="fas fa-save"></i> Guardar Cambios</button>
+            </div>
+
+            <div class="album-card" style="max-width: 600px; margin: 0 auto 40px;">
+                <div class="form-group">
+                    <label>Título del Álbum</label>
+                    <input type="text" id="input-album-title" placeholder="Nuevo Álbum">
+                </div>
+                <div class="form-group">
+                    <label>Portada (Imagen o Color con Textura)</label>
+                    <div class="file-drop-zone" id="drop-zone-album-cover">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Arrastra la portada aquí o haz clic para subir</p>
+                        <input type="file" id="input-album-cover-file" accept="image/*" style="display: none;">
+                        <div class="file-name" style="font-size: 12px; color: #00d2ff; margin-top: 5px;"></div>
+                    </div>
+                    <div class="color-input-wrapper">
+                        <input type="text" id="input-album-cover" placeholder="midominio.com/portada.png" style="flex:1;">
+                        <input type="color" id="input-album-cover-color" value="#1a1a1a" title="Color de Portada" class="color-picker-custom">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Contraportada (Imagen o Color con Textura)</label>
+                    <div class="file-drop-zone" id="drop-zone-album-back">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Arrastra la contraportada aquí o haz clic para subir</p>
+                        <input type="file" id="input-album-back-file" accept="image/*" style="display: none;">
+                        <div class="file-name" style="font-size: 12px; color: #00d2ff; margin-top: 5px;"></div>
+                    </div>
+                    <div class="color-input-wrapper">
+                        <input type="text" id="input-album-back" placeholder="midominio.com/contraportada.png" style="flex:1;">
+                        <input type="color" id="input-album-back-color" value="#1a1a1a" title="Color de Contraportada" class="color-picker-custom">
+                    </div>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <label class="switch">
+                        <input type="checkbox" id="input-album-public" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <label style="margin-bottom: 0; cursor: pointer;" for="input-album-public">Álbum Público (Visible en el link)</label>
+                </div>
+            </div>
+
+            <div class="admin-header">
+                <h2><i class="fas fa-file-alt"></i> Páginas</h2>
+                <button id="btn-add-page" class="btn"><i class="fas fa-plus-circle"></i> Añadir Página</button>
+            </div>
+            <div id="page-list" class="page-list-container">
+                <!-- Pages will be loaded here -->
+            </div>
+            <div id="btn-add-page-bottom-container" style="text-align: center; margin-top: 30px; margin-bottom: 20px; display: none;">
+                <button id="btn-add-page-bottom" class="btn"><i class="fas fa-plus-circle"></i> Añadir Página</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Slot Modal -->
+    <div id="slot-modal" class="overlay">
+        <div class="overlay-content">
+            <span id="close-slot-modal" class="close-btn">&times;</span>
+            <h2>Editar Espacio</h2>
+
+            <!-- External Card Search -->
+            <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px;">
+                <label><i class="fas fa-search"></i> Buscar en Base de Datos Externa</label>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input type="text" id="external-search-input" placeholder="Nombre o código de la carta..." style="flex: 1;">
+                    <button id="btn-external-search" class="btn"><i class="fas fa-search"></i></button>
+                </div>
+                <div id="external-search-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; margin-top: 15px; max-height: 160px; overflow-y: auto; padding: 5px; border-top: 1px solid #333;">
+                    <!-- Results will appear here -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>URL de la Imagen</label>
+                <div class="file-drop-zone" id="drop-zone-slot">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Arrastra una imagen aquí o haz clic para subir a Cloudinary</p>
+                    <input type="file" id="input-slot-file" accept="image/*" style="display: none;">
+                    <div class="file-name" style="font-size: 12px; color: #00d2ff; margin-top: 5px;"></div>
+                </div>
+                <input type="text" id="slot-image-url" placeholder="midominio.com/carta.png">
+            </div>
+
+            <div class="info-grid">
+                <div class="form-group">
+                    <label>Nombre de la Carta</label>
+                    <input type="text" id="slot-name">
+                </div>
+                <div class="form-group">
+                    <label>Efecto Holo (Popup)</label>
+                    <select id="slot-holo-effect" style="width: 100%; background: #252525; color: white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+                        <option value="" style="background: #252525;">Ninguno</option>
+                        <option value="foil" style="background: #252525;">Foil</option>
+                        <option value="custom-texture" style="background: #252525;">CustomTexture</option>
+                        <option value="custom-foil" style="background: #252525;">CustomFoil</option>
+                        <option value="pk-rare-holo" style="background: #252525;">PK: Rare Holo</option>
+                        <option value="pk-rare-holo-cosmos" style="background: #252525;">PK: Cosmos Holo</option>
+                        <option value="pk-rare-holo-v" style="background: #252525;">PK: Rare Holo V</option>
+                        <option value="pk-rare-holo-vmax" style="background: #252525;">PK: Rare Holo VMAX</option>
+                        <option value="pk-rare-holo-vstar" style="background: #252525;">PK: Rare Holo VSTAR</option>
+                        <option value="pk-rare-rainbow" style="background: #252525;">PK: Rare Rainbow</option>
+                        <option value="pk-rare-rainbow-alt" style="background: #252525;">PK: Rare Rainbow Alt</option>
+                        <option value="pk-rare-secret" style="background: #252525;">PK: Rare Secret</option>
+                        <option value="pk-rare-shiny" style="background: #252525;">PK: Rare Shiny</option>
+                        <option value="pk-rare-shiny-v" style="background: #252525;">PK: Rare Shiny V</option>
+                        <option value="pk-rare-shiny-vmax" style="background: #252525;">PK: Rare Shiny VMAX</option>
+                        <option value="pk-amazing-rare" style="background: #252525;">PK: Amazing Rare</option>
+                        <option value="pk-radiant-rare" style="background: #252525;">PK: Radiant Rare</option>
+                        <option value="pk-rare-ultra" style="background: #252525;">PK: Rare Ultra</option>
+                        <option value="pk-trainer-gallery" style="background: #252525;">PK: Trainer Gallery</option>
+                        <option value="pk-trainer-gallery-secret-rare" style="background: #252525;">PK: TG Secret Rare</option>
+                        <option value="pk-trainer-gallery-v-max" style="background: #252525;">PK: TG VMAX</option>
+                        <option value="pk-trainer-gallery-v-regular" style="background: #252525;">PK: TG V</option>
+                        <option value="pk-trainer-full-art" style="background: #252525;">PK: Trainer Full Art</option>
+                        <option value="pk-rare-holo-v-full-art" style="background: #252525;">PK: V Full Art</option>
+                        <option value="pk-reverse-holo" style="background: #252525;">PK: Reverse Holo</option>
+                    </select>
+                </div>
+                <div class="form-group" id="custom-mask-container" style="display: none;">
+                    <label>URL de la Máscara (CustomTexture / CustomFoil)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="slot-custom-mask" placeholder="midominio.com/mascara.png" style="flex: 1;">
+                        <button id="btn-open-mask-editor" class="btn btn-secondary" style="white-space: nowrap;">
+                            <i class="fas fa-paint-brush"></i> Editar
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group" id="custom-foil-type-container" style="display: none;">
+                    <label>Tipo de Foil (CustomFoil)</label>
+                    <select id="slot-custom-foil-type" style="width: 100%; background: #252525; color: white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+                        <option value="foil" style="background: #252525;">Foil</option>
+                        <option value="custom-texture" style="background: #252525;">CustomTexture</option>
+                        <option value="pk-rare-holo" style="background: #252525;">PK: Rare Holo</option>
+                        <option value="pk-rare-holo-cosmos" style="background: #252525;">PK: Cosmos Holo</option>
+                        <option value="pk-rare-holo-v" style="background: #252525;">PK: Rare Holo V</option>
+                        <option value="pk-rare-holo-vmax" style="background: #252525;">PK: Rare Holo VMAX</option>
+                        <option value="pk-rare-holo-vstar" style="background: #252525;">PK: Rare Holo VSTAR</option>
+                        <option value="pk-rare-rainbow" style="background: #252525;">PK: Rare Rainbow</option>
+                        <option value="pk-rare-rainbow-alt" style="background: #252525;">PK: Rare Rainbow Alt</option>
+                        <option value="pk-rare-secret" style="background: #252525;">PK: Rare Secret</option>
+                        <option value="pk-rare-shiny" style="background: #252525;">PK: Rare Shiny</option>
+                        <option value="pk-rare-shiny-v" style="background: #252525;">PK: Rare Shiny V</option>
+                        <option value="pk-rare-shiny-vmax" style="background: #252525;">PK: Rare Shiny VMAX</option>
+                        <option value="pk-amazing-rare" style="background: #252525;">PK: Amazing Rare</option>
+                        <option value="pk-radiant-rare" style="background: #252525;">PK: Radiant Rare</option>
+                        <option value="pk-rare-ultra" style="background: #252525;">PK: Rare Ultra</option>
+                        <option value="pk-trainer-gallery" style="background: #252525;">PK: Trainer Gallery</option>
+                        <option value="pk-trainer-gallery-secret-rare" style="background: #252525;">PK: TG Secret Rare</option>
+                        <option value="pk-trainer-gallery-v-max" style="background: #252525;">PK: TG VMAX</option>
+                        <option value="pk-trainer-gallery-v-regular" style="background: #252525;">PK: TG V</option>
+                        <option value="pk-trainer-full-art" style="background: #252525;">PK: Trainer Full Art</option>
+                        <option value="pk-rare-holo-v-full-art" style="background: #252525;">PK: V Full Art</option>
+                        <option value="pk-reverse-holo" style="background: #252525;">PK: Reverse Holo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="info-grid">
+                <div class="form-group">
+                    <label>Rareza</label>
+                    <input type="text" id="slot-rarity">
+                </div>
+                <div class="form-group">
+                    <label>Expansión</label>
+                    <input type="text" id="slot-expansion">
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <input type="text" id="slot-condition">
+                </div>
+                <div class="form-group">
+                    <label>Cantidad</label>
+                    <input type="text" id="slot-quantity">
+                </div>
+                <div class="form-group price-item">
+                    <label>Precio</label>
+                    <input type="text" id="slot-price">
+                </div>
+            </div>
+            <button id="btn-save-slot" class="btn" style="width: 100%; margin-top: 15px;"><i class="fas fa-check-circle"></i> Guardar Carta</button>
+        </div>
+    </div>
+
+    <!-- Spirit Upload Modal (Admin only) -->
+    <div id="spirit-upload-modal" class="overlay">
+        <div class="overlay-content">
+            <span id="close-spirit-upload-modal" class="close-btn">&times;</span>
+            <h2 id="spirit-modal-title">Subir Nuevo Compañero</h2>
+            <input type="hidden" id="edit-spirit-id">
+            <div class="form-group">
+                <label>Nombre del Compañero</label>
+                <input type="text" id="input-spirit-name" placeholder="Ej: Pikachu">
+            </div>
+            <div class="form-group">
+                <label>Archivos del Modelo (GLTF, GLB, BIN, Texturas)</label>
+                <div class="drop-zone file-drop-zone" id="drop-zone-spirit">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Arrastra todos los archivos del modelo (.gltf, .glb, .bin, texturas) aquí o haz clic para seleccionar</p>
+                    <input type="file" id="input-spirit-files" multiple accept=".gltf,.glb,.bin,.png,.jpg,.jpeg,.webp" style="display: none;">
+                    <div class="file-name"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tipo de Animación del Modelo</label>
+                <select id="input-spirit-animation">
+                    <option value="orbit">Giro en Eje Z (Órbita)</option>
+                    <option value="float">Movimiento Sutil (Flotante)</option>
+                    <option value="float-static">Flotante (Sin Rotación)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Asset de Partículas (Ej: cerezo.png)</label>
+                <input type="text" id="input-spirit-particle-asset" placeholder="midominio.com/particula.png">
+            </div>
+            <div class="form-group">
+                <label>Tipo de Movimiento de Partículas</label>
+                <select id="input-spirit-particle-movement">
+                    <option value="falling">Cayendo (Gravedad)</option>
+                    <option value="trail">Estela (Sigue al personaje)</option>
+                    <option value="none">Sin Partículas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tamaño del Modelo (Escala)</label>
+                <input type="number" id="input-spirit-scale" step="0.1" value="1.8" placeholder="Ej: 1.8">
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <label class="switch">
+                    <input type="checkbox" id="input-spirit-public" checked>
+                    <span class="slider"></span>
+                </label>
+                <label style="margin-bottom: 0; cursor: pointer;" for="input-spirit-public">Compañero Público (Visible en el link)</label>
+            </div>
+            <button id="btn-save-spirit" class="btn" style="width: 100%; margin-top: 20px;"><i class="fas fa-cloud-upload-alt"></i> Subir a la Nube</button>
+        </div>
+    </div>
+
+    <!-- Mask Editor Modal -->
+    <div id="mask-editor-overlay" class="overlay">
+        <div class="overlay-content" style="max-width: 600px;">
+            <span id="close-mask-editor" class="close-btn">&times;</span>
+            <h2>Editor de Máscara</h2>
+            <p style="font-size: 12px; color: #aaa; margin-bottom: 15px;">Dibuja en blanco donde quieras aplicar el efecto foil.</p>
+
+            <div id="mask-canvas-wrapper" style="position: relative; margin-bottom: 20px; border: 2px solid #333; border-radius: 12px; overflow: hidden; width: 168px; height: 244px;">
+                <!-- Card background will be set via CSS -->
+                <canvas id="mask-canvas" width="168" height="244" style="cursor: crosshair; display: block;"></canvas>
+            </div>
+
+            <div class="editor-controls" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <label style="font-size: 12px; text-transform: uppercase; color: #666; font-weight: 700;">Tamaño:</label>
+                    <input type="range" id="brush-size" min="1" max="50" value="10" style="flex: 1;">
+                    <span id="brush-size-val" style="font-size: 14px; width: 30px;">10</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <button id="tool-brush" class="btn btn-secondary active"><i class="fas fa-paint-brush"></i> Pincel</button>
+                    <button id="tool-eraser" class="btn btn-secondary"><i class="fas fa-eraser"></i> Borrador</button>
+                    <button id="btn-undo-mask" class="btn btn-secondary"><i class="fas fa-undo"></i> Deshacer</button>
+                    <button id="btn-clear-mask" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Limpiar Todo</button>
+                </div>
+
+                <button id="btn-save-mask" class="btn" style="width: 100%;"><i class="fas fa-save"></i> Guardar Máscara</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/cloudinary-upload.js"></script>
+    <script src="js/viking-data.js"></script>
+    <script src="js/companion-bot.js"></script>
+    <script src="js/admin.js"></script>
+
+    <!-- Floating Companion (Jules: Draggable wrapper) -->
+    <div id="companion-wrapper">
+        <div class="companion-drag-handle" id="companion-drag-handle" title="Arrastra para mover al compañero">
+            <i class="fas fa-arrows-alt"></i>
+        </div>
+        <div id="floating-companion-container"></div>
+        <div id="companion-bubble" class="companion-bubble"></div>
+
+        <!-- Companion Menu -->
+        <div class="companion-menu-popup" id="companion-menu">
+            <div class="companion-menu-item" id="menu-item-chat"><i class="fas fa-comment-dots"></i> Hablar</div>
+            <div class="companion-menu-item" id="menu-item-details"><i class="fas fa-search-plus"></i> Ver Detalles</div>
+        </div>
+    </div>
+
+    <!-- Chatbot Window -->
+    <div id="chatbot-container">
+        <div class="chatbot-header">
+            <h3>Asistente Vikingdev</h3>
+            <span id="close-chatbot" style="cursor:pointer; font-size: 1.5rem;">&times;</span>
+        </div>
+        <div class="chatbot-messages" id="chat-messages">
+            <div class="chat-msg msg-bot">¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy?</div>
+        </div>
+        <div class="chatbot-input-area">
+            <div class="faq-buttons">
+                <button class="faq-btn" data-faq="album">¿Cómo crear álbum?</button>
+                <button class="faq-btn" data-faq="add_card">¿Cómo agregar cartas?</button>
+                <button class="faq-btn" data-faq="scanner">¿Cómo usar el scanner?</button>
+                <button class="faq-btn" data-faq="notifications">Configurar pedidos</button>
+                <button class="faq-btn" data-faq="foil">Efecto Foil Custom</button>
+                <button class="faq-btn" data-faq="wishlist_faq">Lista de Deseos</button>
+                <button class="faq-btn" data-faq="deck_prices">Precios en Decks</button>
+                <button class="faq-btn" data-faq="theme">Cambiar tema</button>
+                <button class="faq-btn" data-faq="spirit">¿Qué es un compañero?</button>
+            </div>
+            <div class="chat-input-wrapper">
+                <input type="text" id="chat-input" placeholder="Escribe tu mensaje...">
+                <button id="send-chat" class="btn btn-sm"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</body>    
+</html>

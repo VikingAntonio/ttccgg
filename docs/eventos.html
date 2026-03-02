@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Eventos - Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+</head>
+<body class="public-body">
+    <div id="authenticated-content" style="display: none; width: 100%; max-width: 1200px; margin: 0 auto; padding: 80px 20px;">
+        <div class="admin-header">
+            <a href="admin.html" class="btn btn-secondary" style="margin-bottom: 20px; text-decoration: none; display: inline-block;">
+                <i class="fas fa-arrow-left"></i> Volver al Panel
+            </a>
+            <h1>Gestión de Eventos</h1>
+            <p>Anuncia preventas, lanzamientos y noticias especiales.</p>
+            <button id="btn-new-event" class="btn" style="margin-top: 20px;"><i class="fas fa-plus"></i> Nuevo Evento</button>
+        </div>
+
+        <div id="event-container" class="album-list">
+            <div class="loading">Cargando eventos...</div>
+        </div>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="overlay">
+        <div class="overlay-content" style="max-width: 500px;">
+            <span class="close-btn" onclick="$('.overlay').removeClass('active')">&times;</span>
+            <h2 id="modal-title">Evento</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-group"><label>Título</label><input type="text" id="input-name"></div>
+            <div class="form-group">
+                <label>Tipo de Evento</label>
+                <select id="input-type">
+                    <option value="informativo">Informativo</option>
+                    <option value="promocion">Promoción</option>
+                    <option value="anuncio">Anuncio</option>
+                    <option value="noticia">Noticia</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Fecha (Opcional)</label><input type="datetime-local" id="input-date"></div>
+            <div class="form-group">
+                <label>Imagen</label>
+                <label class="file-drop-zone" id="drop-zone" for="input-file" style="cursor: pointer; display: block;">
+                    <p id="drop-text" style="pointer-events: none;">Sube una imagen (Click o Arrastra)</p>
+                    <img id="img-preview" style="display:none; max-width: 100%; max-height: 150px; border-radius: 8px; margin: 0 auto; pointer-events: none;">
+                    <input type="file" id="input-file" accept="image/*" style="display:none;">
+                </label>
+                <input type="hidden" id="input-image-url">
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                <label class="switch"><input type="checkbox" id="input-featured"><span class="slider"></span></label>
+                <label>Destacar en inicio</label>
+            </div>
+            <div class="form-group"><label>Descripción</label><textarea id="input-desc" rows="3"></textarea></div>
+            <button id="btn-save-event" class="btn" style="width: 100%;">Guardar</button>
+        </div>
+    </div>
+
+    <script src="js/cloudinary-upload.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/eventos.js"></script>
+</body>
+</html>

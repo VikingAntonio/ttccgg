@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+</head>
+<body class="public-body">
+    <!-- Floating User Panel -->
+    <div class="top-left-panel" id="top-panel">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <img id="dropdown-user-logo" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: none;">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Usuario</div>
+                    <div class="user-dropdown-role" id="dropdown-user-role" style="display: none;">Usuario</div>
+                </div>
+                <a href="admin.html" class="menu-item"><i class="fas fa-home"></i> Mi Panel</a>
+                <a href="#" class="menu-item logout" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </div>
+        <div class="cart-container-panel">
+            <a href="carrito.html" class="user-avatar-btn" id="cart-btn" title="Ver Carrito">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="admin-container" style="max-width: 800px; margin: 80px auto; padding: 20px; display: none;">
+        <div class="admin-header">
+            <a href="admin.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
+            <h1>Mi Perfil</h1>
+        </div>
+
+        <div class="album-card" style="padding: 30px; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border);">
+            <div id="profile-form">
+                <!-- Logo Section (Store only) -->
+                <div class="store-only-field" style="display: none; margin-bottom: 30px; text-align: center;">
+                    <div style="position: relative; display: inline-block;">
+                        <img id="profile-logo-preview" src="https://midominio.com/placeholder-logo.png" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color);">
+                        <button id="btn-change-logo" class="btn btn-sm" style="position: absolute; bottom: 0; right: 0; border-radius: 50%; width: 40px; height: 40px; padding: 0;">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <input type="file" id="input-logo-file" accept="image/*" style="display: none;">
+                    </div>
+                    <p style="font-size: 0.8rem; color: #888; margin-top: 10px;">Logo de la Tienda</p>
+                </div>
+
+                <div class="grid-2-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Nombre de Usuario</label>
+                        <input type="text" id="profile-username" readonly class="readonly-field">
+                    </div>
+                    <div class="form-group" style="display: none;">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="profile-email" readonly class="readonly-field">
+                    </div>
+                    <div class="form-group store-only-field" style="display: none;">
+                        <label>Nombre de la Tienda</label>
+                        <input type="text" id="profile-store-name">
+                    </div>
+                    <div class="form-group store-only-field" style="display: none;">
+                        <label><i class="fab fa-whatsapp"></i> WhatsApp Link</label>
+                        <input type="text" id="profile-whatsapp" placeholder="https://wa.me/123456789">
+                    </div>
+                    <div class="form-group store-only-field" style="display: none;">
+                        <label><i class="fab fa-facebook-messenger"></i> Messenger Link</label>
+                        <input type="text" id="profile-messenger" placeholder="https://m.me/usuario">
+                    </div>
+                    <div class="form-group store-only-field" style="display: none;">
+                        <label><i class="fas fa-clock"></i> Horario de Atención</label>
+                        <input type="text" id="profile-horario" placeholder="Lun-Vie 9:00 - 18:00">
+
+                        <!-- Schedule Helper -->
+                        <div class="schedule-helper">
+                            <div class="schedule-helper-title">Configurador Rápido</div>
+                            <div class="schedule-days-grid">
+                                <button type="button" class="day-btn" data-day="Lun-Vie">Lun-Vie</button>
+                                <button type="button" class="day-btn" data-day="Lun-Sab">Lun-Sab</button>
+                                <button type="button" class="day-btn" data-day="Toda la semana">Toda la semana</button>
+                                <button type="button" class="day-btn" data-day="Sáb">Sáb</button>
+                                <button type="button" class="day-btn" data-day="Dom">Dom</button>
+                            </div>
+                            <div class="schedule-time-row">
+                                <input type="time" id="sched-start" value="09:00">
+                                <span>a</span>
+                                <input type="time" id="sched-end" value="18:00">
+                                <button type="button" id="btn-apply-sched" class="btn btn-sm btn-primary btn-apply-schedule">
+                                    <i class="fas fa-plus"></i> Aplicar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group store-only-field" style="display: none; margin-top: 10px;">
+                    <label><i class="fas fa-map-marker-alt"></i> Ubicación / Dirección</label>
+                    <input type="text" id="profile-ubicacion" placeholder="Ciudad, País o Dirección completa">
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button id="btn-save-profile" class="btn" style="width: 100%;">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/perfil.js"></script>
+</body>
+</html>

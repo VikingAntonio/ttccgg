@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Preventas - Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+</head>
+<body>
+    <!-- Floating User Panel -->
+    <div class="top-left-panel" id="top-panel" style="display: none;">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <img id="dropdown-user-logo" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: none;">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Usuario</div>
+                </div>
+                <a href="admin.html" class="menu-item"><i class="fas fa-arrow-left"></i> Volver al Panel</a>
+                <a href="#" class="menu-item logout" id="menu-btn-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="authenticated-content" style="display: none; width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 80px;">
+        <div class="admin-header">
+            <a href="admin.html" class="btn btn-secondary" style="margin-bottom: 20px; text-decoration: none; display: inline-block;">
+                <i class="fas fa-arrow-left"></i> Volver al Panel
+            </a>
+            <h1>Gestión de Preventas</h1>
+            <p>Administra las próximas expansiones y productos con preventa activa.</p>
+            <button id="btn-open-add-modal" class="btn" style="margin-top: 20px;">
+                <i class="fas fa-plus"></i> Añadir Preventa
+            </button>
+        </div>
+
+        <div id="preorder-list" class="album-list">
+            <!-- Preorders will be loaded here -->
+            <div class="loading">Cargando preventas...</div>
+        </div>
+    </div>
+
+    <!-- Preorder Modal -->
+    <div id="preorder-modal" class="overlay">
+        <div class="overlay-content">
+            <span id="close-preorder-modal" class="close-btn">&times;</span>
+            <h2 id="modal-title">Añadir Preventa</h2>
+
+            <input type="hidden" id="edit-preorder-id">
+
+            <!-- External Search -->
+            <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px;">
+                <label><i class="fas fa-search"></i> Buscar en Base de Datos Externa</label>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input type="text" id="external-search-input" placeholder="Nombre del set o preventa..." style="flex: 1;">
+                    <button id="btn-external-search" class="btn"><i class="fas fa-search"></i></button>
+                </div>
+                <div id="external-search-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; padding: 5px; border-top: 1px solid #333;">
+                    <!-- Results will appear here -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre de la Preventa</label>
+                <input type="text" id="preorder-name" placeholder="Ej: Phantom Nightmare Booster Box">
+            </div>
+
+            <div class="form-group">
+                <label>URL de la Imagen</label>
+                <div class="file-drop-zone" id="drop-zone-preorder">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Arrastra una imagen aquí o haz clic para subir a Cloudinary</p>
+                    <input type="file" id="input-preorder-file" accept="image/*" style="display: none;">
+                    <div class="file-name" style="font-size: 12px; color: #00d2ff; margin-top: 5px;"></div>
+                </div>
+                <input type="text" id="preorder-image-url" placeholder="https://...">
+            </div>
+
+            <div class="info-grid">
+                <div class="form-group">
+                    <label>Precio</label>
+                    <input type="text" id="preorder-price" placeholder="Ej: $1,200.00">
+                </div>
+                <div class="form-group">
+                    <label>TCG</label>
+                    <select id="preorder-tcg">
+                        <option value="yugioh">Yu-Gi-Oh!</option>
+                        <option value="pokemon">Pokémon</option>
+                        <option value="onepiece">One Piece</option>
+                        <option value="lorcana">Lorcana</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Fecha Límite de Pago</label>
+                <input type="text" id="preorder-deadline" placeholder="Ej: 15 de Octubre, 2024">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <label class="switch">
+                    <input type="checkbox" id="preorder-public" checked>
+                    <span class="slider"></span>
+                </label>
+                <label style="margin-bottom: 0; cursor: pointer;" for="preorder-public">Preventa Pública (Visible en el link)</label>
+            </div>
+
+            <button id="btn-save-preorder" class="btn" style="width: 100%; margin-top: 20px;">
+                <i class="fas fa-check-circle"></i> Guardar Preventa
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/cloudinary-upload.js"></script>
+    <script src="js/viking-data.js"></script>
+    <script src="js/preventas.js"></script>
+</body>
+</html>

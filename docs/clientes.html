@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Clientes - Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .client-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: white;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .client-table th, .client-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .client-table th {
+            background: rgba(255,255,255,0.05);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--primary-color);
+        }
+        .client-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .btn-pdf {
+            background: #e74c3c !important;
+        }
+        @media (max-width: 768px) {
+            .client-table { display: block; overflow-x: auto; }
+            .client-table th, .client-table td { white-space: nowrap; }
+        }
+
+        /* Hidden Template for PDF */
+        #pdf-template {
+            position: fixed;
+            top: -10000px;
+            left: -10000px;
+            width: 600px;
+            background: white;
+            color: black;
+            padding: 40px;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .pdf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00d2ff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .pdf-logo { width: 80px; height: 80px; object-fit: contain; }
+        .pdf-title { font-size: 24px; font-weight: 800; color: #1a1a1a; }
+        .pdf-content { margin-bottom: 30px; }
+        .pdf-row { display: flex; margin-bottom: 15px; }
+        .pdf-label { width: 150px; font-weight: 700; color: #666; }
+        .pdf-value { flex: 1; color: #333; }
+        .pdf-total {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: right;
+            font-size: 20px;
+            font-weight: 800;
+            color: #00d2ff;
+        }
+    </style>
+</head>
+<body class="public-body">
+    <div class="top-left-panel" id="top-panel" style="display: none;">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Usuario</div>
+                </div>
+                <a href="admin.html" class="menu-item"><i class="fas fa-arrow-left"></i> Volver al Panel</a>
+                <a href="#" class="menu-item logout" id="menu-btn-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="authenticated-content" style="display: none; width: 100%; max-width: 1200px; margin: 0 auto; padding: 80px 20px;">
+        <div class="admin-header">
+            <a href="admin.html" class="btn btn-secondary" style="margin-bottom: 20px; text-decoration: none; display: inline-block;">
+                <i class="fas fa-arrow-left"></i> Volver al Panel
+            </a>
+            <h1>Gestión de Clientes</h1>
+            <p>Registra pedidos de tus clientes y genera notas de remisión.</p>
+            <button id="btn-open-add-modal" class="btn" style="margin-top: 20px;">
+                <i class="fas fa-user-plus"></i> Nuevo Cliente/Pedido
+            </button>
+        </div>
+
+        <table class="client-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Detalles</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="client-list">
+                <tr><td colspan="5" class="loading">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Client Modal -->
+    <div id="client-modal" class="overlay">
+        <div class="overlay-content" style="max-width: 600px;">
+            <span id="close-modal" class="close-btn">&times;</span>
+            <h2 id="modal-title">Añadir Pedido</h2>
+            <input type="hidden" id="edit-id">
+
+            <div class="form-group">
+                <label>Nombre del Cliente</label>
+                <input type="text" id="input-nombre" placeholder="Nombre completo">
+            </div>
+
+            <div class="form-group">
+                <label>Detalles del Pedido</label>
+                <textarea id="input-detalles" style="width: 100%; background: var(--slot-bg); border: 1px solid var(--slot-border); padding: 12px; color: white; border-radius: 8px;" rows="4" placeholder="Lista de productos, condiciones, etc."></textarea>
+            </div>
+
+            <div class="info-grid">
+                <div class="form-group">
+                    <label>Precio Total</label>
+                    <input type="text" id="input-total" placeholder="Ej: $1,500.00">
+                </div>
+                <div class="form-group">
+                    <label>Descuento Aplicado</label>
+                    <input type="text" id="input-descuento" placeholder="Ej: 10% o $100">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="input-status">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Pagado">Pagado</option>
+                    <option value="Entregado">Entregado</option>
+                    <option value="Apartado">Apartado</option>
+                </select>
+            </div>
+
+            <button id="btn-save" class="btn" style="width: 100%; margin-top: 20px;">
+                <i class="fas fa-save"></i> Guardar Cliente
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden PDF Template -->
+    <div id="pdf-template">
+        <div class="pdf-header">
+            <div id="tpl-store-info">
+                <div class="pdf-title">NOTA DE PEDIDO</div>
+                <div id="tpl-store-name" style="font-weight: 700; color: #666;">Nombre de la Tienda</div>
+            </div>
+            <img id="tpl-logo" class="pdf-logo" src="vikingdev.png">
+        </div>
+        <div class="pdf-content">
+            <div class="pdf-row">
+                <div class="pdf-label">CLIENTE:</div>
+                <div id="tpl-cliente" class="pdf-value"></div>
+            </div>
+            <div class="pdf-row">
+                <div class="pdf-label">FECHA:</div>
+                <div id="tpl-fecha" class="pdf-value"></div>
+            </div>
+            <div class="pdf-row" style="flex-direction: column;">
+                <div class="pdf-label" style="width: 100%; margin-bottom: 10px;">DETALLES:</div>
+                <div id="tpl-detalles" class="pdf-value" style="white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 8px; min-height: 100px;"></div>
+            </div>
+            <div class="pdf-row" id="tpl-row-descuento">
+                <div class="pdf-label">DESCUENTO:</div>
+                <div id="tpl-descuento" class="pdf-value"></div>
+            </div>
+        </div>
+        <div class="pdf-total">
+            TOTAL: <span id="tpl-total"></span>
+        </div>
+        <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #aaa; border-top: 1px solid #eee; padding-top: 20px;">
+            Gracias por su compra en <span class="tpl-store-name-inline">Vikingdev TCG</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/clientes.js"></script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Tracking - Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <style>
+        .tracking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: white;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .tracking-table th, .tracking-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .tracking-table th {
+            background: rgba(255,255,255,0.05);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--primary-color);
+        }
+        .tracking-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .status-enviado { background: #3a7bd5; color: white; }
+        .status-entregado { background: #00ff88; color: #000; }
+        .status-pendiente { background: #f1c40f; color: #000; }
+        .status-cancelado { background: #ff4757; color: white; }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-left: 10px;
+            transition: transform 0.2s;
+        }
+        .copy-btn:hover { transform: scale(1.2); }
+
+        @media (max-width: 768px) {
+            .tracking-table { display: block; overflow-x: auto; }
+            .tracking-table th, .tracking-table td { white-space: nowrap; }
+        }
+    </style>
+</head>
+<body class="public-body">
+    <div class="top-left-panel" id="top-panel" style="display: none;">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Usuario</div>
+                </div>
+                <a href="admin.html" class="menu-item"><i class="fas fa-arrow-left"></i> Volver al Panel</a>
+                <a href="#" class="menu-item logout" id="menu-btn-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="authenticated-content" style="display: none; width: 100%; max-width: 1200px; margin: 0 auto; padding: 80px 20px;">
+        <div class="admin-header">
+            <a href="admin.html" class="btn btn-secondary" style="margin-bottom: 20px; text-decoration: none; display: inline-block;">
+                <i class="fas fa-arrow-left"></i> Volver al Panel
+            </a>
+            <h1>Gestión de Tracking</h1>
+            <p>Administra los números de guía y estados de envío para tus clientes.</p>
+            <button id="btn-open-add-modal" class="btn" style="margin-top: 20px;">
+                <i class="fas fa-plus"></i> Añadir Guía
+            </button>
+        </div>
+
+        <table class="tracking-table">
+            <thead>
+                <tr>
+                    <th>Guía</th>
+                    <th>Paquetería</th>
+                    <th>Cliente</th>
+                    <th>Envío / Llegada</th>
+                    <th>Status</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tracking-list">
+                <tr><td colspan="6" class="loading">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tracking Modal -->
+    <div id="tracking-modal" class="overlay">
+        <div class="overlay-content" style="max-width: 600px;">
+            <span id="close-modal" class="close-btn">&times;</span>
+            <h2 id="modal-title">Añadir Guía</h2>
+            <input type="hidden" id="edit-id">
+
+            <div class="info-grid">
+                <div class="form-group">
+                    <label>No. de Guía</label>
+                    <input type="text" id="input-guia" placeholder="1234567890">
+                </div>
+                <div class="form-group">
+                    <label>Paquetería</label>
+                    <input type="text" id="input-paqueteria" placeholder="FedEx, DHL, etc.">
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" id="input-cliente" placeholder="Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="text" id="input-telefono" placeholder="5512345678">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Ubicación / Dirección</label>
+                <input type="text" id="input-ubicacion" placeholder="Ciudad, Estado, CP">
+            </div>
+
+            <div class="form-group">
+                <label>Detalles del Pedido</label>
+                <textarea id="input-detalles" style="width: 100%; background: var(--slot-bg); border: 1px solid var(--slot-border); padding: 12px; color: white; border-radius: 8px;" rows="3" placeholder="Contenido del paquete..."></textarea>
+            </div>
+
+            <div class="info-grid">
+                <div class="form-group">
+                    <label>Fecha de Envío</label>
+                    <input type="date" id="input-fecha-envio">
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Llegada (Estimada)</label>
+                    <input type="date" id="input-fecha-llegada">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="input-status">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Enviado">Enviado</option>
+                    <option value="Entregado">Entregado</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select>
+            </div>
+
+            <button id="btn-save" class="btn" style="width: 100%; margin-top: 20px;">
+                <i class="fas fa-save"></i> Guardar Registro
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/tracking.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+Explicación del problema con los modelos GLTF en la pantalla de carga:
+
+El problema por el cual los modelos no se muestran en las pantallas de carga, a pesar de que sí se ven correctamente en el panel de administración y en los enlaces públicos, se debe a la compresión de los archivos.
+
+Al exportar los modelos desde Blender con compresión (como Draco o Meshopt), el cargador estándar de Three.js (GLTFLoader) no puede procesarlos por sí solo. Requiere decodificadores específicos para "descomprimir" el modelo antes de renderizarlo.
+
+Por otro lado, el componente <model-viewer> (usado en las tarjetas del álbum y en la administración) ya incluye estos decodificadores internamente, por lo que los modelos comprimidos funcionan allí sin configuración adicional.
+
+Para solucionar esto, he actualizado el archivo 'docs/js/loading3d.js' para:
+1. Importar los módulos DRACOLoader y MeshoptDecoder.
+2. Configurar el GLTFLoader para que utilice estos decodificadores automáticamente al cargar un modelo.
+
+Con estos cambios, los modelos comprimidos desde Blender deberían aparecer correctamente en las pantallas de carga.

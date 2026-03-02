@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vikingdev Play! - Yu-Gi-Oh LP Calculator</title>
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --text-color: #ffffff;
+            --primary-color: #00d2ff;
+            --sum-color: #2ed573;
+            --sub-color: #ff4757;
+            --div-color: #ffa502;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at center, #1a2a3a 0%, #000000 100%);
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .calculator-container {
+            width: 100%;
+            max-width: 1400px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .play-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .play-header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .back-btn, .btn-reset-top {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .back-btn:hover, .btn-reset-top:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-reset-top {
+            background: linear-gradient(135deg, #ff4757, #c0392b);
+            border: none;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 180px 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .player-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .player-name-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-name {
+            background: none;
+            border: none;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 5px;
+            width: 150px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .player-name:focus {
+            border-bottom-color: var(--primary-color);
+        }
+
+        .lp-display {
+            font-size: 6rem;
+            font-weight: 800;
+            margin: 5px 0;
+            text-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            transition: color 0.3s, transform 0.1s;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .lp-adding { color: var(--sum-color); transform: scale(1.1); }
+        .lp-subtracting { color: var(--sub-color); transform: scale(0.9); }
+        .lp-dividing { color: var(--div-color); transform: scale(0.95); }
+
+        .controls-grid {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .input-group {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1.8rem;
+            text-align: center;
+            font-family: inherit;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn-side {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            border: none;
+            color: black;
+            font-weight: 800;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-sum { background-color: var(--sum-color); }
+        .btn-sub { background-color: var(--sub-color); }
+        .btn-div { background-color: var(--div-color); font-size: 1.2rem; }
+
+        .btn-side:hover {
+            filter: brightness(1.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-side:active {
+            transform: scale(0.9);
+        }
+
+        .quick-values {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .quick-values button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .quick-values button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Tools Section */
+        .tools-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tool-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .tool-box:hover {
+            transform: scale(1.05);
+        }
+
+        .tool-box span {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary-color);
+        }
+
+        /* Coin styles */
+        .coin {
+            width: 70px;
+            height: 70px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .coin .side {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            backface-visibility: hidden;
+            border: 3px solid #ffd700;
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            color: #7f4f24;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .coin .tails {
+            transform: rotateY(180deg);
+        }
+
+        /* Dice styles */
+        .dice {
+            width: 70px;
+            height: 70px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: #111;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.5s;
+        }
+
+        .animate-dice {
+            animation: roll 0.6s infinite ease-in-out;
+        }
+
+        @keyframes roll {
+            0% { transform: rotate(0deg) translateY(0); }
+            25% { transform: rotate(90deg) translateY(-10px); }
+            50% { transform: rotate(180deg) translateY(0); }
+            75% { transform: rotate(270deg) translateY(-10px); }
+            100% { transform: rotate(360deg) translateY(0); }
+        }
+
+        /* Responsiveness */
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .tools-section {
+                flex-direction: row;
+                justify-content: center;
+                width: 100%;
+                gap: 50px;
+                margin: 10px 0;
+            }
+
+            .lp-display {
+                font-size: 5rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .calculator-container {
+                padding: 10px;
+            }
+
+            .player-section {
+                padding: 15px;
+            }
+
+            .lp-display {
+                font-size: 4.5rem;
+            }
+
+            .btn-side {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .input-group input {
+                font-size: 1.5rem;
+                padding: 10px;
+            }
+
+            .play-header h1 {
+                font-size: 1rem;
+            }
+
+            .back-btn span, .btn-reset-top span {
+                display: none;
+            }
+
+            .tools-section {
+                gap: 30px;
+                padding: 15px;
+            }
+        }
+
+        /* Landscape optimization */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .calculator-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: flex-start;
+            }
+
+            .play-header { width: 100%; }
+
+            .main-layout {
+                grid-template-columns: 1fr 1fr;
+                width: 100%;
+            }
+
+            .tools-section {
+                width: auto;
+                position: fixed;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 10px 30px;
+                flex-direction: row;
+                gap: 20px;
+                z-index: 100;
+            }
+
+            .tool-box span { display: none; }
+            .coin, .dice { width: 40px; height: 40px; font-size: 1.5rem; }
+            .coin .side { font-size: 1.2rem; }
+            .dice { font-size: 1.8rem; }
+
+            .player-section { padding: 10px; gap: 5px; }
+            .lp-display { font-size: 3rem; margin: 0; }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border-radius: 25px;
+            padding: 35px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            font-size: 3.5rem;
+            color: var(--sub-color);
+            margin-bottom: 20px;
+        }
+
+        .modal-content h2 {
+            margin: 0 0 15px 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .modal-content p {
+            margin: 0 0 30px 0;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-confirm {
+            background: var(--sub-color);
+            color: white;
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .modal-btn:active {
+            transform: scale(0.95);
+        }
+
+    </style>
+</head>
+<body class="play-body">
+    <div class="calculator-container">
+        <header class="play-header">
+            <a href="index.html" class="back-btn" onclick="if(window.history.length > 1){ window.history.back(); return false; }"><i class="fas fa-arrow-left"></i> <span>Volver</span></a>
+            <h1>Yu-Gi-Oh! Play!</h1>
+            <button id="reset-game" class="btn-reset-top" onclick="showResetModal()"><i class="fas fa-redo"></i> <span>Reset</span></button>
+        </header>
+
+        <div class="main-layout">
+            <!-- Player 1 -->
+            <div class="player-section" id="player1">
+                <div class="player-name-container">
+                    <input type="text" class="player-name" placeholder="Jugador 1" value="Mi LP">
+                </div>
+                <div class="lp-display" id="lp-1">8000</div>
+
+                <div class="controls-grid">
+                    <button class="btn-side btn-sum" onclick="operate(1, 'sum')" title="Sumar"><i class="fas fa-plus"></i></button>
+                    <div class="input-group">
+                        <input type="number" id="input-1" placeholder="0" min="0" inputmode="numeric">
+                    </div>
+                    <button class="btn-side btn-sub" onclick="operate(1, 'sub')" title="Restar"><i class="fas fa-minus"></i></button>
+                    <button class="btn-side btn-div" onclick="operate(1, 'div')" title="Dividir entre 2">/2</button>
+                </div>
+
+                <div class="quick-values">
+                    <button onclick="setInputValue(1, 500)">500</button>
+                    <button onclick="setInputValue(1, 1000)">1000</button>
+                    <button onclick="setInputValue(1, 2000)">2000</button>
+                    <button onclick="setInputValue(1, 4000)">4000</button>
+                    <button onclick="clearInput(1)"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+
+            <!-- Center Tools -->
+            <div class="tools-section">
+                <div class="tool-box" onclick="flipCoin()">
+                    <div id="coin" class="coin">
+                        <div class="side heads"><i class="fas fa-circle-user"></i></div>
+                        <div class="side tails"><i class="fas fa-crown"></i></div>
+                    </div>
+                    <span id="coin-result">Moneda</span>
+                </div>
+
+                <div class="tool-box" onclick="rollDice()">
+                    <div id="dice" class="dice">
+                        <i class="fas fa-dice-one"></i>
+                    </div>
+                    <span id="dice-result">Dado</span>
+                </div>
+            </div>
+
+            <!-- Player 2 -->
+            <div class="player-section" id="player2">
+                <div class="player-name-container">
+                    <input type="text" class="player-name" placeholder="Jugador 2" value="Oponente">
+                </div>
+                <div class="lp-display" id="lp-2">8000</div>
+
+                <div class="controls-grid">
+                    <button class="btn-side btn-sum" onclick="operate(2, 'sum')" title="Sumar"><i class="fas fa-plus"></i></button>
+                    <div class="input-group">
+                        <input type="number" id="input-2" placeholder="0" min="0" inputmode="numeric">
+                    </div>
+                    <button class="btn-side btn-sub" onclick="operate(2, 'sub')" title="Restar"><i class="fas fa-minus"></i></button>
+                    <button class="btn-side btn-div" onclick="operate(2, 'div')" title="Dividir entre 2">/2</button>
+                </div>
+
+                <div class="quick-values">
+                    <button onclick="setInputValue(2, 500)">500</button>
+                    <button onclick="setInputValue(2, 1000)">1000</button>
+                    <button onclick="setInputValue(2, 2000)">2000</button>
+                    <button onclick="setInputValue(2, 4000)">4000</button>
+                    <button onclick="clearInput(2)"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Modal -->
+    <div id="reset-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h2>¿Reiniciar partida?</h2>
+            <p>Se restablecerán ambos contadores a 8000 LP y se limpiarán los resultados de los dados y la moneda.</p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="closeResetModal()">Cancelar</button>
+                <button class="modal-btn btn-confirm" onclick="confirmReset()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lp = [8000, 8000];
+        let animationRefs = [null, null];
+        const diceIcons = [
+            'fa-dice-one', 'fa-dice-two', 'fa-dice-three',
+            'fa-dice-four', 'fa-dice-five', 'fa-dice-six'
+        ];
+
+        function getRandomInt(max) {
+            const array = new Uint32Array(1);
+            crypto.getRandomValues(array);
+            return array[0] % max;
+        }
+
+        function operate(playerIdx, type) {
+            const index = playerIdx - 1;
+            const inputEl = document.getElementById(`input-${playerIdx}`);
+            const displayEl = document.getElementById(`lp-${playerIdx}`);
+            const value = parseInt(inputEl.value) || 0;
+
+            if (value === 0 && type !== 'div') return;
+
+            let startValue = lp[index];
+            let endValue = startValue;
+
+            if (type === 'sum') {
+                endValue += value;
+                animateValue(displayEl, startValue, endValue, 'lp-adding');
+            } else if (type === 'sub') {
+                endValue -= value;
+                if (endValue < 0) endValue = 0;
+                animateValue(displayEl, startValue, endValue, 'lp-subtracting');
+            } else if (type === 'div') {
+                endValue = Math.floor(startValue / 2);
+                animateValue(displayEl, startValue, endValue, 'lp-dividing');
+            }
+
+            lp[index] = endValue;
+            inputEl.value = '';
+        }
+
+        function animateValue(el, start, end, className) {
+            const playerIdx = el.id.split('-')[1] - 1;
+            if (animationRefs[playerIdx]) {
+                cancelAnimationFrame(animationRefs[playerIdx]);
+            }
+
+            const duration = 400; // Faster animation
+            const startTime = performance.now();
+
+            el.classList.remove('lp-adding', 'lp-subtracting', 'lp-dividing');
+            el.classList.add(className);
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Ease out cubic
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+                const currentValue = Math.floor(start + (end - start) * easeProgress);
+                el.innerText = currentValue;
+
+                if (progress < 1) {
+                    animationRefs[playerIdx] = requestAnimationFrame(update);
+                } else {
+                    el.innerText = end;
+                    animationRefs[playerIdx] = null;
+                    setTimeout(() => el.classList.remove(className), 300);
+                }
+            }
+
+            animationRefs[playerIdx] = requestAnimationFrame(update);
+        }
+
+        function setInputValue(playerIdx, val) {
+            const el = document.getElementById(`input-${playerIdx}`);
+            const current = parseInt(el.value) || 0;
+            el.value = current + val;
+        }
+
+        function clearInput(playerIdx) {
+            document.getElementById(`input-${playerIdx}`).value = '';
+        }
+
+        function showResetModal() {
+            document.getElementById('reset-modal').classList.add('active');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.remove('active');
+        }
+
+        function confirmReset() {
+            resetGame();
+            closeResetModal();
+        }
+
+        function resetGame() {
+            lp = [8000, 8000];
+            document.getElementById('lp-1').innerText = 8000;
+            document.getElementById('lp-2').innerText = 8000;
+            document.getElementById('input-1').value = '';
+            document.getElementById('input-2').value = '';
+            document.getElementById('coin-result').innerText = 'Moneda';
+            document.getElementById('dice-result').innerText = 'Dado';
+
+            // Cancel any ongoing animations
+            animationRefs.forEach((ref, idx) => {
+                if (ref) cancelAnimationFrame(ref);
+                animationRefs[idx] = null;
+            });
+
+            // Clear animation classes
+            document.getElementById('lp-1').className = 'lp-display';
+            document.getElementById('lp-2').className = 'lp-display';
+        }
+
+        let isFlipping = false;
+        let coinRotation = 0;
+        function flipCoin() {
+            if (isFlipping) return;
+            isFlipping = true;
+            const coin = document.getElementById('coin');
+            const resultText = document.getElementById('coin-result');
+
+            resultText.innerText = 'Girando...';
+
+            const isHeads = getRandomInt(2) === 0;
+            const result = isHeads ? 'Cara' : 'Cruz';
+
+            // Add at least 5 full rotations (1800 deg)
+            const extraRotations = 5 + getRandomInt(5);
+            const currentFullRotations = Math.floor(coinRotation / 360);
+            coinRotation = (currentFullRotations + extraRotations) * 360 + (isHeads ? 0 : 180);
+
+            coin.style.transform = `rotateY(${coinRotation}deg)`;
+
+            setTimeout(() => {
+                resultText.innerText = result;
+                isFlipping = false;
+            }, 1000);
+        }
+
+        let isRolling = false;
+        function rollDice() {
+            if (isRolling) return;
+            isRolling = true;
+            const dice = document.getElementById('dice');
+            const resultText = document.getElementById('dice-result');
+
+            dice.classList.add('animate-dice');
+            resultText.innerText = 'Lanzando...';
+
+            let rolls = 0;
+            const interval = setInterval(() => {
+                const randomIdx = getRandomInt(6);
+                dice.innerHTML = `<i class="fas ${diceIcons[randomIdx]}"></i>`;
+                rolls++;
+                if (rolls > 15) {
+                    clearInterval(interval);
+                    const finalVal = getRandomInt(6);
+                    dice.innerHTML = `<i class="fas ${diceIcons[finalVal]}"></i>`;
+                    dice.classList.remove('animate-dice');
+                    resultText.innerText = `Resultado: ${finalVal + 1}`;
+                    isRolling = false;
+                }
+            }, 60);
+        }
+    </script>
+</body>
+</html>

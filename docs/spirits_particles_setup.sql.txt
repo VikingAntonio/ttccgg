@@ -1,0 +1,13 @@
+-- SQL para agregar configuración de partículas al sistema de Spirits
+-- Ejecuta esto en el SQL Editor de tu panel de Supabase
+
+-- Agregar columnas para partículas
+ALTER TABLE spirits
+ADD COLUMN IF NOT EXISTS particle_asset TEXT DEFAULT 'cerezo.png',
+ADD COLUMN IF NOT EXISTS particle_movement_type TEXT DEFAULT 'falling'; -- Opciones: 'falling', 'trail'
+
+-- Ejemplo de configuración para Ash Blossom (Trail):
+-- UPDATE spirits SET particle_asset = 'cerezo.png', particle_movement_type = 'trail' WHERE gltf_url LIKE '%ash.gltf%';
+
+-- Ejemplo de configuración para otros (Falling):
+-- UPDATE spirits SET particle_asset = 'cerezo.png', particle_movement_type = 'falling' WHERE gltf_url NOT LIKE '%ash.gltf%';

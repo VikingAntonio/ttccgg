@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="public-body">
+    <div class="admin-nav">
+        <a href="admin.html" class="btn btn-secondary btn-volver"><i class="fas fa-arrow-left"></i> Volver al Admin</a>
+        <button id="btn-logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+    </div>
+
+    <div class="admin-section" style="display: none;">
+        <div class="admin-header">
+            <a href="admin.html" class="btn btn-secondary btn-volver" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Volver</a>
+            <h1><i class="fas fa-users-cog"></i> Gestión de Usuarios</h1>
+            <button id="btn-show-create-user" class="btn"><i class="fas fa-user-plus"></i> Nuevo Usuario</button>
+        </div>
+
+        <!-- Create User Form (Modal-like) -->
+        <div id="create-user-panel" class="album-card" style="display: none; max-width: 500px; margin: 20px auto; padding: 20px;">
+            <h3>Crear Nuevo Usuario</h3>
+            <div class="form-group">
+                <label>Nombre de Usuario</label>
+                <input type="text" id="new-username" placeholder="usuario123">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="new-password" placeholder="********">
+            </div>
+            <div class="form-group">
+                <label>Nombre de la Tienda</label>
+                <input type="text" id="new-store" placeholder="Mi Tienda TCG (Opcional)">
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                <label class="switch">
+                    <input type="checkbox" id="new-is-store">
+                    <span class="slider"></span>
+                </label>
+                <span style="color: white; font-weight: bold;">¿Es Tienda?</span>
+            </div>
+            <div class="form-group">
+                <label>Rol</label>
+                <select id="new-role" style="width: 100%; padding: 10px; background: #252525; color: white; border: 1px solid #3d3d3d; border-radius: 8px;">
+                    <option value="starter">Starter</option>
+                    <option value="premium">Premium</option>
+                    <option value="admin_store">Admin store</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="btn-save-user" class="btn" style="flex: 1;">Guardar</button>
+                <button id="btn-cancel-user" class="btn btn-secondary" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Contraseña</th>
+                    <th>Tienda</th>
+                    <th>¿Tienda?</th>
+                    <th>Rol</th>
+                    <th>Link</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="user-list-body">
+                <!-- Users will be loaded here -->
+                <tr><td colspan="6" class="loading">Cargando usuarios...</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Manage Limits Panel -->
+        <div id="manage-limits-panel" class="album-card" style="display: none; max-width: 600px; margin: 30px auto; padding: 25px; border: 1px solid #00d2ff; box-shadow: 0 0 15px rgba(0,210,255,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0; color: #00d2ff;"><i class="fas fa-sliders-h"></i> Gestionar Límites</h2>
+                <button id="btn-close-limits" class="btn btn-secondary btn-sm"><i class="fas fa-times"></i> Volver</button>
+            </div>
+            <p style="color: #aaa; margin-bottom: 20px;">Usuario: <strong id="manage-username" style="color: #fff;"></strong></p>
+            <input type="hidden" id="manage-user-id">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Máximo de Álbumes</label>
+                    <input type="number" id="limit-albums" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Páginas por Álbum</label>
+                    <input type="number" id="limit-pages" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Máximo de Decks</label>
+                    <input type="number" id="limit-decks" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Cartas por Deck</label>
+                    <input type="number" id="limit-cards" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Máximo Deseos</label>
+                    <input type="number" id="limit-wishlist" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Máximo Sellado</label>
+                    <input type="number" id="limit-sealed" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Máximo Preventas</label>
+                    <input type="number" id="limit-preorders" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Máximo Clientes</label>
+                    <input type="number" id="limit-clients-count" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Máximo Subastas</label>
+                    <input type="number" id="limit-auctions-count" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Máximo Eventos</label>
+                    <input type="number" id="limit-events" min="1">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="perm-tracking" style="width: auto;"> Tracking
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="perm-clients" style="width: auto;"> Clientes
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="perm-auctions" style="width: auto;"> Subastas
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="perm-events" style="width: auto;"> Eventos
+                </label>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="margin-bottom: 0;">Compañeros Desbloqueados</label>
+                    <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; color: #00d2ff;">
+                        <input type="checkbox" id="spirit-select-all"> Seleccionar Todos
+                    </label>
+                </div>
+                <div id="spirits-selection-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; max-height: 250px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05);">
+                    <!-- Spirits will be loaded here -->
+                    <div style="color: #666; font-size: 12px;">Cargando compañeros...</div>
+                </div>
+                <small style="color: #666; margin-top: 5px; display: block;">Selecciona los compañeros que este usuario podrá utilizar.</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label><i class="fas fa-link"></i> Link Público</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="user-public-link" readonly placeholder="Calculando link...">
+                        <button class="btn btn-secondary btn-sm" onclick="copyUserLink()" title="Copiar Link"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-whatsapp"></i> WhatsApp Number</label>
+                    <input type="text" id="user-whatsapp" placeholder="https://wa.me/Telefono">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-facebook-messenger"></i> Messenger ID/Link</label>
+                    <input type="text" id="user-messenger" placeholder="https://m.me/nombreUsuario">
+                </div>
+            </div>
+            <div style="margin-top: 25px;">
+                <button id="btn-save-limits" class="btn" style="width: 100%;"><i class="fas fa-save"></i> Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/supabase-config.js"></script>
+    <script>
+        async function initUsersPanel() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'admin.html';
+                return;
+            }
+
+            const { data: currentUser } = await _supabase
+                .from('usuarios')
+                .select('id, username, role')
+                .eq('id', session.user.id)
+                .single();
+
+            if (!currentUser || currentUser.role !== 'admin') {
+                await Swal.fire('Acceso Denegado', 'Solo los administradores pueden acceder a este panel.', 'error');
+                window.location.href = 'admin.html';
+                return;
+            }
+
+            $('.admin-section').show();
+
+            // Helper to generate public link
+            function generatePublicUrl(user) {
+                const identifier = user.is_store && user.store_name ? `store=${encodeURIComponent(user.store_name)}` : `user=${encodeURIComponent(user.username)}`;
+                const baseUrl = window.location.origin + window.location.pathname.replace('users.html', 'public.html');
+                return `${baseUrl}?${identifier}`;
+            }
+
+            window.copyUserLink = function() {
+                const linkInput = document.getElementById('user-public-link');
+                linkInput.select();
+                document.execCommand('copy');
+                Swal.fire({
+                    title: '¡Copiado!',
+                    text: 'Enlace copiado al portapapeles',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            };
+
+            // Load Users Function
+            async function loadUsers() {
+                const { data: users, error } = await _supabase
+                    .from('usuarios')
+                    .select('id, username, store_name, is_store, role, max_albums, max_pages, max_decks, max_cards_per_deck, allowed_spirit_ids, whatsapp_link, messenger_link, has_tracking, has_clients, has_auctions, has_events, max_events, max_wishlist, max_sealed, max_preorders, max_clients_count, max_auctions_count, public_link')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    $('#user-list-body').html('<tr><td colspan="7" class="error">Error al cargar usuarios.</td></tr>');
+                    return;
+                }
+
+                $('#user-list-body').empty();
+                users.forEach(user => {
+                    const publicUrl = generatePublicUrl(user);
+                    const $row = $(`
+                        <tr data-id="${user.id}">
+                            <td>${user.username}</td>
+                            <td>********</td>
+                            <td>${user.store_name || '-'}</td>
+                            <td style="text-align: center;">
+                                <label class="switch" style="transform: scale(0.8);">
+                                    <input type="checkbox" class="toggle-is-store" data-id="${user.id}" ${user.is_store ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <select class="role-select" data-id="${user.id}" style="background: #252525; color: white; border: 1px solid #3d3d3d; padding: 5px; border-radius: 4px;">
+                                    <option value="starter" ${user.role === 'starter' || user.role === 'user' ? 'selected' : ''}>Starter</option>
+                                    <option value="premium" ${user.role === 'premium' ? 'selected' : ''}>Premium</option>
+                                    <option value="admin_store" ${user.role === 'admin_store' ? 'selected' : ''}>Admin store</option>
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </td>
+                            <td style="text-align: center;">
+                                <a href="${publicUrl}" target="_blank" title="${publicUrl}" style="color: #00d2ff;"><i class="fas fa-external-link-alt"></i></a>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="btn btn-secondary btn-sm btn-manage-limits" title="Gestionar Límites"><i class="fas fa-cog"></i></button>
+                                    <button class="btn btn-danger btn-sm btn-delete-user" data-id="${user.id}"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    `);
+
+                    $row.find('.btn-manage-limits').click(() => showManageLimits(user));
+                    $('#user-list-body').append($row);
+                });
+            }
+
+            // Initial load
+            await loadUsers();
+
+            // Toggle Create Form
+            $('#btn-show-create-user').click(() => $('#create-user-panel').slideToggle());
+            $('#btn-cancel-user').click(() => $('#create-user-panel').slideUp());
+
+            // Create User
+            $('#btn-save-user').click(async function() {
+                Swal.fire('Información', 'Para crear usuarios con Supabase Auth, utiliza el panel de Supabase o regístrate normalmente.', 'info');
+            });
+
+            // Toggle is_store Event
+            $(document).on('change', '.toggle-is-store', async function() {
+                if (!currentUser || currentUser.role !== 'admin') return;
+                const userId = $(this).data('id');
+                const is_store = $(this).is(':checked');
+
+                const { error } = await _supabase
+                    .from('usuarios')
+                    .update({ is_store })
+                    .eq('id', userId);
+
+                if (error) {
+                    Swal.fire('Error', 'No se pudo actualizar el estado de tienda', 'error');
+                    $(this).prop('checked', !is_store);
+                } else {
+                    Swal.fire({
+                        title: 'Actualizado',
+                        text: 'Estado de tienda actualizado',
+                        icon: 'success',
+                        timer: 1000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }
+            });
+
+            // Role Change Event
+            $(document).on('change', '.role-select', async function() {
+                if (!currentUser || currentUser.role !== 'admin') return;
+                const userId = $(this).data('id');
+                const newRole = $(this).val();
+
+                const roleDefaults = {
+                    'starter': { max_albums: 3, max_pages: 5, max_decks: 1, max_cards_per_deck: 60, allowed_spirit_ids: '1', has_tracking: false, has_clients: true, has_auctions: true, has_events: true, max_events: 1, max_wishlist: 10, max_sealed: 5, max_preorders: 1, max_clients_count: 3, max_auctions_count: 3 },
+                    'premium': { max_albums: 5, max_pages: 10, max_decks: 5, max_cards_per_deck: 60, allowed_spirit_ids: 'all', has_tracking: true, has_clients: true, has_auctions: true, has_events: true, max_events: 5, max_wishlist: 50, max_sealed: 20, max_preorders: 5, max_clients_count: 10, max_auctions_count: 15 },
+                    'admin_store': { max_albums: 999, max_pages: 999, max_decks: 999, max_cards_per_deck: 999, allowed_spirit_ids: 'all', has_tracking: true, has_clients: true, has_auctions: true, has_events: true, max_events: 999, max_wishlist: 999, max_sealed: 999, max_preorders: 999, max_clients_count: 999, max_auctions_count: 999 },
+                    'admin': { max_albums: 999, max_pages: 999, max_decks: 999, max_cards_per_deck: 999, allowed_spirit_ids: 'all', has_tracking: true, has_clients: true, has_auctions: true, has_events: true, max_events: 999, max_wishlist: 999, max_sealed: 999, max_preorders: 999, max_clients_count: 999, max_auctions_count: 999 }
+                };
+
+                const result = await Swal.fire({
+                    title: '¿Cambiar Rol?',
+                    text: `¿Deseas aplicar los límites por defecto del plan ${newRole}? (Esto sobreescribirá los límites actuales del usuario)`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, aplicar defaults',
+                    cancelButtonText: 'Solo cambiar rol',
+                    reverseButtons: true
+                });
+
+                let updateData = { role: newRole };
+                if (result.isConfirmed) {
+                    updateData = { ...updateData, ...roleDefaults[newRole] };
+                }
+
+                const { error } = await _supabase
+                    .from('usuarios')
+                    .update(updateData)
+                    .eq('id', userId);
+
+                if (error) {
+                    Swal.fire('Error', 'No se pudo actualizar el usuario', 'error');
+                    console.error(error);
+                    loadUsers(); // Revert UI
+                } else {
+                    if (userId === currentUser.id) {
+                        const { data: updatedProfile } = await _supabase
+                            .from('usuarios')
+                            .select('*')
+                            .eq('id', currentUser.id)
+                            .single();
+                        currentUser = updatedProfile;
+                        localStorage.setItem('tcg_session', JSON.stringify(currentUser));
+                    }
+                    Swal.fire({
+                        title: 'Actualizado',
+                        text: result.isConfirmed ? 'Rol y límites actualizados con éxito' : 'Rol del usuario actualizado con éxito',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    loadUsers();
+                }
+            });
+
+            // Delete User Event
+            $(document).on('click', '.btn-delete-user', async function() {
+                if (!currentUser || currentUser.role !== 'admin') return;
+                const userId = $(this).data('id');
+                if (userId === currentUser.id) {
+                    Swal.fire('Acción denegada', 'No puedes eliminar tu propia cuenta.', 'info');
+                    return;
+                }
+
+                const result = await Swal.fire({
+                    title: '¿Eliminar usuario?',
+                    text: "Esta acción eliminará permanentemente al usuario",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ff4757',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (result.isConfirmed) {
+                    const { error } = await _supabase
+                        .from('usuarios')
+                        .delete()
+                        .eq('id', userId);
+
+                    if (error) {
+                        Swal.fire('Error', 'No se pudo eliminar al usuario', 'error');
+                    } else {
+                        Swal.fire('Eliminado', 'Usuario borrado con éxito', 'success');
+                        loadUsers();
+                    }
+                }
+            });
+
+            $('#btn-logout').click(async function() {
+                await _supabase.auth.signOut();
+                localStorage.removeItem('tcg_session');
+                window.location.href = 'admin.html';
+            });
+
+            // --- Manage Limits Logic ---
+            let allAvailableSpirits = [];
+
+            async function loadAvailableSpirits() {
+                const { data, error } = await _supabase
+                    .from('spirits')
+                    .select('id, name')
+                    .order('name', { ascending: true });
+
+                if (!error && data) {
+                    allAvailableSpirits = data;
+                }
+            }
+
+            // Initial spirits load
+            await loadAvailableSpirits();
+
+            // Select All Spirits Toggle
+            $('#spirit-select-all').change(function() {
+                const isChecked = $(this).is(':checked');
+                $('.spirit-checkbox').prop('checked', isChecked);
+            });
+
+            $(document).on('change', '.spirit-checkbox', function() {
+                const total = $('.spirit-checkbox').length;
+                const checked = $('.spirit-checkbox:checked').length;
+                $('#spirit-select-all').prop('checked', total === checked && total > 0);
+            });
+
+            function renderSpiritsCheckboxes(allowedIds) {
+                const $container = $('#spirits-selection-list');
+                $container.empty();
+
+                const allowedArray = allowedIds ? allowedIds.split(',').map(id => id.trim()) : [];
+                const isAll = allowedIds === 'all';
+
+                $('#spirit-select-all').prop('checked', isAll);
+
+                allAvailableSpirits.forEach(spirit => {
+                    const isChecked = isAll || allowedArray.includes(spirit.id.toString());
+                    const $item = $(`
+                        <label style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05);">
+                            <input type="checkbox" class="spirit-checkbox" value="${spirit.id}" ${isChecked ? 'checked' : ''}>
+                            <span style="font-size: 13px; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${spirit.name}</span>
+                        </label>
+                    `);
+                    $container.append($item);
+                });
+            }
+
+            function showManageLimits(user) {
+                $('#manage-user-id').val(user.id);
+                $('#manage-username').text(user.username);
+                $('#user-public-link').val(generatePublicUrl(user));
+                $('#limit-albums').val(user.max_albums || 3);
+                $('#limit-pages').val(user.max_pages || 5);
+                $('#limit-decks').val(user.max_decks || 1);
+                $('#limit-cards').val(user.max_cards_per_deck || 60);
+                $('#limit-wishlist').val(user.max_wishlist || 10);
+                $('#limit-sealed').val(user.max_sealed || 5);
+                $('#limit-preorders').val(user.max_preorders || 1);
+                $('#limit-clients-count').val(user.max_clients_count || 3);
+                $('#limit-auctions-count').val(user.max_auctions_count || 3);
+                $('#limit-events').val(user.max_events || 1);
+                $('#user-whatsapp').val(user.whatsapp_link || '');
+                $('#user-messenger').val(user.messenger_link || '');
+
+                $('#perm-tracking').prop('checked', user.has_tracking || false);
+                $('#perm-clients').prop('checked', user.has_clients || false);
+                $('#perm-auctions').prop('checked', user.has_auctions || false);
+                $('#perm-events').prop('checked', user.has_events || false);
+
+                renderSpiritsCheckboxes(user.allowed_spirit_ids || '');
+
+                $('#manage-limits-panel').slideDown();
+                // Scroll to panel
+                $('html, body').animate({
+                    scrollTop: $("#manage-limits-panel").offset().top - 50
+                }, 500);
+            }
+
+            $('#btn-close-limits').click(() => $('#manage-limits-panel').slideUp());
+
+            $('#btn-save-limits').click(async function() {
+                if (!currentUser || currentUser.role !== 'admin') return;
+                const userId = $('#manage-user-id').val();
+
+                // Collect selected spirits
+                const selectedSpirits = [];
+                $('.spirit-checkbox:checked').each(function() {
+                    selectedSpirits.push($(this).val());
+                });
+
+                let allowed_spirit_ids = selectedSpirits.join(',');
+                // If all are selected, we could set it to 'all', but join is fine too.
+                // However, let's keep 'all' if all checkboxes are checked for consistency
+                if (selectedSpirits.length === allAvailableSpirits.length && allAvailableSpirits.length > 0) {
+                    allowed_spirit_ids = 'all';
+                }
+
+                const updateData = {
+                    max_albums: parseInt($('#limit-albums').val()),
+                    max_pages: parseInt($('#limit-pages').val()),
+                    max_decks: parseInt($('#limit-decks').val()),
+                    max_cards_per_deck: parseInt($('#limit-cards').val()),
+                    max_wishlist: parseInt($('#limit-wishlist').val()),
+                    max_sealed: parseInt($('#limit-sealed').val()),
+                    max_preorders: parseInt($('#limit-preorders').val()),
+                    max_clients_count: parseInt($('#limit-clients-count').val()),
+                    max_auctions_count: parseInt($('#limit-auctions-count').val()),
+                    max_events: parseInt($('#limit-events').val()),
+                    allowed_spirit_ids: allowed_spirit_ids,
+                    whatsapp_link: $('#user-whatsapp').val().trim(),
+                    messenger_link: $('#user-messenger').val().trim(),
+                    has_tracking: $('#perm-tracking').is(':checked'),
+                    has_clients: $('#perm-clients').is(':checked'),
+                    has_auctions: $('#perm-auctions').is(':checked'),
+                    has_events: $('#perm-events').is(':checked'),
+                    public_link: $('#user-public-link').val()
+                };
+
+                const { error } = await _supabase
+                    .from('usuarios')
+                    .update(updateData)
+                    .eq('id', userId);
+
+                if (error) {
+                    Swal.fire('Error', 'No se pudieron actualizar los límites', 'error');
+                } else {
+                    Swal.fire('¡Éxito!', 'Límites actualizados correctamente', 'success');
+                    $('#manage-limits-panel').slideUp();
+                    loadUsers();
+                }
+            });
+        }
+
+        $(document).ready(async function() {
+            await initUsersPanel();
+        });
+    </script>
+</body>
+</html>

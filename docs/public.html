@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/barajaryg.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="js/turn.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Three.js for 3D Loading Screen -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="js/loading3d.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+</head>
+<body class="public-body">
+    <!-- Floating User Panel -->
+    <div class="top-left-panel" id="top-panel">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <img id="dropdown-user-logo" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: none;">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Invitado</div>
+                    <div class="user-dropdown-role" id="dropdown-user-role" style="display: none;">Invitado</div>
+                </div>
+                <a href="admin.html" class="menu-item"><i class="fas fa-lock"></i> Panel Admin</a>
+                <a href="play.html" class="menu-item"><i class="fas fa-gamepad"></i> Play!</a>
+                <a href="#" class="menu-item" id="menu-wishlist-btn"><i class="fas fa-heart"></i> Ver Buscamos</a>
+                <div class="menu-item theme-menu-container">
+                    <i class="fas fa-palette"></i>
+                    <div class="theme-switcher-inline">
+                        <button class="theme-btn-small" data-theme="theme-light" title="Modo Claro"></button>
+                        <button class="theme-btn-small" data-theme="theme-medium" title="Modo Medio"></button>
+                        <button class="theme-btn-small" data-theme="theme-dark" title="Modo Oscuro"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cart-container-panel">
+            <a href="carrito.html" class="user-avatar-btn" id="cart-btn" title="Ver Carrito">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </a>
+        </div>
+    </div>
+    <!-- Pantalla de Carga -->
+    <div id="loading-screen" class="loading-screen">
+        <div id="loading-3d-container"></div>
+        <div class="loading-message">Cargando interfaz...</div>
+    </div>
+
+    <header class="public-header">
+        <div class="store-badge">
+            <i class="fas fa-store" id="public-store-icon"></i>
+            <img id="public-store-logo" src="" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 10px; border: 1px solid var(--primary-color); display: none;">
+            <span id="public-store-name">Cargando Tienda...</span>
+        </div>
+        <h1 id="public-view-title">Colección de Álbumes</h1>
+        <p>Explora nuestra selección de cartas y colecciones exclusivas.</p>
+
+        <nav class="public-nav">
+            <button class="nav-btn active" data-view="albums"><i class="fas fa-book"></i> Álbumes</button>
+            <button class="nav-btn" data-view="sealed"><i class="fas fa-box"></i> Productos</button>
+            <button class="nav-btn" data-view="preorders" id="preorders-nav-btn"><i class="fas fa-fire"></i> Preventas</button>
+            <button class="nav-btn" data-view="decks"><i class="fas fa-layer-group"></i> Decks</button>
+            <button class="nav-btn" data-view="wishlist" id="wishlist-nav-btn"><i class="fas fa-heart"></i> Buscamos</button>
+            <button class="nav-btn" data-view="events"><i class="fas fa-calendar-alt"></i> Eventos</button>
+        </nav>
+
+
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Buscar álbumes o cartas...">
+                <button id="clear-search" style="display:none;"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="public-main-container" id="main-view-container">
+        <div id="no-results" class="empty" style="display:none; margin-top: 50px;">
+            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+            <p>No se encontraron resultados para tu búsqueda.</p>
+        </div>
+
+        <div id="albums-view" class="view-section active">
+            <div id="albums-container">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando álbumes...
+                </div>
+            </div>
+        </div>
+
+        <div id="sealed-view" class="view-section">
+            <div id="sealed-container" class="decks-grid">
+                <!-- Sealed products will be loaded here -->
+            </div>
+        </div>
+
+        <div id="preorders-view" class="view-section">
+            <div id="preorders-container" class="decks-grid">
+                <!-- Preorders will be loaded here -->
+            </div>
+        </div>
+
+        <div id="decks-view" class="view-section">
+            <div id="decks-container" class="decks-grid">
+                <!-- Decks will be loaded here -->
+            </div>
+        </div>
+
+        <div id="wishlist-view" class="view-section">
+            <div id="wishlist-container" class="decks-grid">
+                <!-- Wishlist items will be loaded here -->
+            </div>
+        </div>
+
+        <div id="events-view" class="view-section">
+            <div id="events-container" class="decks-grid">
+                <!-- Eventos cargados aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Overlay / Modal -->
+    <!-- Spirit Selection Modal -->
+    <div id="spirit-modal" class="overlay">
+        <div class="overlay-content spirit-selection-content" style="max-width: 1100px; width: 95%;">
+            <span id="close-spirit-modal" class="close-btn">&times;</span>
+            <h2 style="color: #00d2ff; text-align: center; margin-bottom: 20px;">Compañeros</h2>
+
+            <div id="public-spirits-grid" class="spirits-grid">
+                <!-- Spirits will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="gltf-overlay" class="overlay">
+        <span id="close-gltf-overlay" class="close-btn-floating">&times;</span>
+        <div class="overlay-content gltf-expanded-content">
+            <model-viewer id="expanded-gltf-viewer"
+                loading="lazy"
+                camera-controls
+                auto-rotate
+                shadow-intensity="1"
+                environment-image="neutral"
+                exposure="1.2"
+                oncontextmenu="return false;">
+            </model-viewer>
+            <div class="card-info">
+                <div id="expanded-gltf-name" class="card-name">Nombre del Compañero</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div id="event-details-overlay" class="overlay">
+        <div class="overlay-content" style="max-width: 600px; width: 95%;">
+            <span id="close-ed-overlay" class="close-btn">&times;</span>
+            <h2 id="ed-name">Detalles del Evento</h2>
+            <div id="ed-info" style="margin: 20px 0; text-align: center; width: 100%;">
+                <img id="ed-image" src="" style="width: 100%; border-radius: 12px; margin-bottom: 20px; display: none;">
+                <p id="ed-desc" style="color: var(--text-color); line-height: 1.6; text-align: left;"></p>
+            </div>
+            <button onclick="$('#event-details-overlay').removeClass('active')" class="btn" style="width: 100%;">Cerrar</button>
+        </div>
+    </div>
+
+
+    <div id="image-overlay" class="overlay">
+        <div class="overlay-content">
+            <span id="close-btn">&times;</span>
+            <div id="card-3d-container" class="card-3d-container">
+                <div id="card-3d" class="card-3d">
+                    <div id="z-text-container">
+                        <img id="expanded-image" src="" alt="Carta Expandida">
+                    </div>
+                    <div class="holo-layer"></div>
+                </div>
+            </div>
+            <div class="card-info">
+                <div id="card-name" class="card-name">Nombre de la Carta</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Rareza</div>
+                        <div id="card-rarity" class="info-value">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Expansión</div>
+                        <div id="card-expansion" class="info-value">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Estado</div>
+                        <div id="card-condition" class="info-value">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Cantidad</div>
+                        <div id="card-quantity" class="info-value">1</div>
+                    </div>
+                    <div class="info-item price-item">
+                        <div class="info-label">Precio Estimado</div>
+                        <div id="card-price" class="info-value">-</div>
+                    </div>
+                </div>
+                <div id="wishlist-info-extra" style="display: none; flex-direction: column; gap: 5px; width: 100%; margin-top: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="info-label" style="font-size: 0.8rem; opacity: 0.7; text-align: left;">Notas:</div>
+                    <div id="card-notes" style="font-size: 0.9rem; color: white; line-height: 1.4; text-align: left;">-</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 25px;">
+                    <button id="btn-add-to-cart" class="btn btn-add-cart-modal" style="margin-top: 0;">
+                        <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                    </button>
+                    <div id="wishlist-contact-buttons" style="display: none; flex-direction: column; gap: 10px; width: 100%;">
+                        <button id="btn-wishlist-whatsapp" class="btn" style="background: #25d366 !important; width: 100%;">
+                            <i class="fab fa-whatsapp"></i> Enviar a WhatsApp
+                        </button>
+                        <button id="btn-wishlist-messenger" class="btn" style="background: #006aff !important; width: 100%;">
+                            <i class="fab fa-facebook-messenger"></i> Enviar a Messenger
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/companion-bot.js"></script>
+    <script src="js/ztext.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Floating Companion (Jules: Draggable wrapper) -->
+    <div id="companion-wrapper">
+        <div class="companion-drag-handle" id="companion-drag-handle" title="Arrastra para mover al compañero">
+            <i class="fas fa-arrows-alt"></i>
+        </div>
+        <div id="floating-companion-container"></div>
+        <div id="companion-bubble" class="companion-bubble"></div>
+
+        <!-- Companion Menu -->
+        <div class="companion-menu-popup" id="companion-menu">
+            <div class="companion-menu-item" id="menu-item-chat"><i class="fas fa-comment-dots"></i> Hablar</div>
+            <div class="companion-menu-item" id="menu-item-details"><i class="fas fa-search-plus"></i> Ver Detalles</div>
+        </div>
+    </div>
+
+    <!-- Chatbot Window -->
+    <div id="chatbot-container">
+        <div class="chatbot-header">
+            <h3>Asistente Vikingdev</h3>
+            <span id="close-chatbot" style="cursor:pointer; font-size: 1.5rem;">&times;</span>
+        </div>
+        <div class="chatbot-messages" id="chat-messages">
+            <div class="chat-msg msg-bot">¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy?</div>
+        </div>
+        <div class="chatbot-input-area">
+            <div class="faq-buttons">
+                <button class="faq-btn" data-faq="album">¿Cómo crear álbum?</button>
+                <button class="faq-btn" data-faq="scanner">¿Cómo usar el scanner?</button>
+                <button class="faq-btn" data-faq="theme">Cambiar tema</button>
+                <button class="faq-btn" data-faq="spirit">¿Qué es un compañero?</button>
+            </div>
+            <div class="chat-input-wrapper">
+                <input type="text" id="chat-input" placeholder="Escribe tu mensaje...">
+                <button id="send-chat" class="btn btn-sm"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

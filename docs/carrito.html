@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <style>
+        .cart-page-container {
+            max-width: 1000px;
+            width: 95%;
+            margin: 120px auto 60px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--slot-border);
+            padding-bottom: 15px;
+        }
+        .cart-header h1 {
+            margin: 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .cart-item {
+            display: grid;
+            grid-template-columns: 80px 1fr auto auto;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: var(--slot-bg);
+            border: 1px solid var(--slot-border);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        .cart-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-color);
+        }
+        .cart-item img {
+            width: 80px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .cart-item-info h3 {
+            margin: 0 0 5px;
+            font-size: 1.1rem;
+        }
+        .cart-item-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .cart-item-price {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #00ff88;
+        }
+        .btn-remove {
+            background: rgba(255, 71, 87, 0.1);
+            color: #ff4757;
+            border: 1px solid rgba(255, 71, 87, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-remove:hover {
+            background: #ff4757;
+            color: white;
+        }
+        .cart-summary {
+            margin-top: 40px;
+            padding: 30px;
+            background: var(--slot-bg);
+            border-radius: 20px;
+            border: 1px solid var(--slot-border);
+            text-align: right;
+        }
+        .total-row {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+        }
+        .total-amount {
+            font-weight: 800;
+            color: #00ff88;
+            font-size: 2rem;
+            margin-left: 20px;
+        }
+        .checkout-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-checkout {
+            padding: 15px 30px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .btn-whatsapp {
+            background: #25d366 !important;
+        }
+        .btn-messenger {
+            background: #006aff !important;
+        }
+        .empty-cart {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .empty-cart i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        @media (max-width: 640px) {
+            .cart-item {
+                grid-template-columns: 60px 1fr;
+                gap: 15px;
+            }
+            .cart-item-price {
+                grid-column: 1 / span 2;
+                text-align: right;
+            }
+            .btn-remove {
+                grid-column: 1 / span 2;
+                text-align: center;
+            }
+            .checkout-actions {
+                flex-direction: column;
+            }
+            .btn-checkout {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="public-body">
+    <!-- Floating User Panel -->
+    <div class="top-left-panel" id="top-panel">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="cart-page-container">
+        <div class="cart-header">
+            <h1><i class="fas fa-shopping-cart"></i> Mi Carrito</h1>
+            <button class="btn btn-secondary btn-sm" id="btn-clear-cart">Vaciar Carrito</button>
+        </div>
+
+        <div id="cart-items-list">
+            <!-- Items loaded here -->
+        </div>
+
+        <div id="cart-summary-section" class="cart-summary" style="display: none;">
+            <div class="total-row">
+                Total Estimado: <span class="total-amount" id="cart-total-display">$0.00</span>
+            </div>
+            <div class="checkout-actions">
+                <button class="btn btn-checkout btn-whatsapp" id="send-whatsapp">
+                    <i class="fab fa-whatsapp"></i> Enviar por WhatsApp
+                </button>
+                <button class="btn btn-checkout btn-messenger" id="send-messenger">
+                    <i class="fab fa-facebook-messenger"></i> Enviar por Messenger
+                </button>
+            </div>
+        </div>
+
+        <div id="empty-cart-msg" class="empty-cart" style="display: none;">
+            <i class="fas fa-shopping-basket"></i>
+            <h2>Tu carrito está vacío</h2>
+            <p>Explora nuestros álbumes y agrega tus cartas favoritas.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        let storeOwnerLinks = {
+            whatsapp: '526645367661',
+            messenger: 'TCGToonShop'
+        };
+
+        $(document).ready(async function() {
+            renderCart();
+            await loadStoreContact();
+
+            $('#btn-clear-cart').click(function() {
+                Swal.fire({
+                    title: '¿Vaciar carrito?',
+                    text: "Se eliminarán todos los artículos seleccionados.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ff4757',
+                    confirmButtonText: 'Sí, vaciar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Cart.clear();
+                        renderCart();
+                    }
+                });
+            });
+
+            $('#send-whatsapp').click(function() {
+                sendMessage('whatsapp');
+            });
+
+            $('#send-messenger').click(function() {
+                sendMessage('messenger');
+            });
+        });
+
+        function renderCart() {
+            const items = Cart.getAll();
+            const $list = $('#cart-items-list');
+            $list.empty();
+
+            if (items.length === 0) {
+                $('#cart-summary-section').hide();
+                $('#empty-cart-msg').show();
+                return;
+            }
+
+            $('#cart-summary-section').show();
+            $('#empty-cart-msg').hide();
+
+            items.forEach(item => {
+                const $itemRow = $(`
+                    <div class="cart-item">
+                        <img src="${item.image_url}" alt="${item.name}">
+                        <div class="cart-item-info">
+                            <h3>${item.name}</h3>
+                            <p>${item.rarity} | ${item.expansion} | ${item.condition}</p>
+                        </div>
+                        <div class="cart-item-price">${item.price}</div>
+                        <button class="btn-remove" onclick="removeItem('${item.cart_id}')" title="Quitar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `);
+                $list.append($itemRow);
+            });
+
+            $('#cart-total-display').text('$' + Cart.getTotal().toFixed(2));
+        }
+
+        window.removeItem = function(id) {
+            Cart.remove(id);
+            renderCart();
+        };
+
+        async function loadStoreContact() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const storeName = urlParams.get('store');
+
+            if (!storeName) return;
+
+            try {
+                const { data, error } = await _supabase
+                    .from('usuarios')
+                    .select('whatsapp_link, messenger_link')
+                    .eq('store_name', storeName)
+                    .single();
+
+                if (!error && data) {
+                    if (data.whatsapp_link) storeOwnerLinks.whatsapp = data.whatsapp_link;
+                    if (data.messenger_link) storeOwnerLinks.messenger = data.messenger_link;
+                }
+            } catch (e) {
+                console.error("Error loading store contact:", e);
+            }
+        }
+
+        function sendMessage(platform) {
+            const items = Cart.getAll();
+            if (items.length === 0) return;
+
+            // Try to get links from the first item if not loaded from URL
+            const firstItem = items[0];
+            let whatsapp = storeOwnerLinks.whatsapp;
+            let messenger = storeOwnerLinks.messenger;
+
+            if (firstItem.whatsapp_link) whatsapp = firstItem.whatsapp_link;
+            if (firstItem.messenger_link) messenger = firstItem.messenger_link;
+
+            let message = "Hola, estoy interesado en comprar estas cartas de TCG Dual:\n\n";
+            items.forEach((item, index) => {
+                message += `${index + 1}. ${item.name} (${item.rarity}) - ${item.price}\n`;
+            });
+            message += `\nTotal Estimado: $${Cart.getTotal().toFixed(2)}`;
+
+            const encodedMsg = encodeURIComponent(message);
+
+            if (platform === 'whatsapp') {
+                const waNumber = whatsapp.replace(/\D/g, '');
+                if (!waNumber) {
+                    Swal.fire('Error', 'No hay un número de WhatsApp configurado para este vendedor.', 'error');
+                    return;
+                }
+                window.open(`https://wa.me/${waNumber}?text=${encodedMsg}`, '_blank');
+            } else {
+                let messengerLink = messenger;
+                if (!messengerLink) {
+                    Swal.fire('Error', 'No hay un enlace de Messenger configurado para este vendedor.', 'error');
+                    return;
+                }
+                if (!messengerLink.startsWith('http')) {
+                    messengerLink = `https://m.me/${messengerLink}`;
+                }
+                const separator = messengerLink.includes('?') ? '&' : '?';
+                window.open(`${messengerLink}${separator}text=${encodedMsg}`, '_blank');
+            }
+        }
+    </script>
+</body>
+</html>

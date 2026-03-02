@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://vikingtcg.xyz/favi.png">
+    <title>Lista de Deseos - Vikingdev TCG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .wishlist-item {
+            min-width: 0; /* Fix flex issue */
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        .wishlist-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2);
+        }
+        .wishlist-field {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            border-radius: 6px;
+            width: 100%;
+        }
+        .wishlist-field:focus {
+            border-color: var(--primary-color) !important;
+            outline: none;
+        }
+        .album-list {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+        }
+
+        /* Pretty Checkbox Styles */
+        .wishlist-checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .wishlist-checkbox-container:hover {
+            border-color: var(--primary-color);
+            background: rgba(0, 0, 0, 0.8);
+        }
+        .wishlist-checkbox-container input {
+            display: none;
+        }
+        .wishlist-checkbox-custom {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #666;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: transparent;
+        }
+        .wishlist-checkbox-container input:checked + .wishlist-checkbox-custom {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .wishlist-checkbox-custom::after {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: white;
+            font-size: 10px;
+            display: none;
+        }
+        .wishlist-checkbox-container input:checked + .wishlist-checkbox-custom::after {
+            display: block;
+        }
+        .wishlist-status-text {
+            font-size: 10px;
+            font-weight: 900;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tcgdex/sdk@2/dist/tcgdex.browser.js"></script>
+</head>
+<body>
+    <!-- Floating User Panel -->
+    <div class="top-left-panel" id="top-panel" style="display: none;">
+        <div class="user-menu-container">
+            <button class="user-avatar-btn" id="avatar-btn">
+                <i class="fas fa-user"></i>
+            </button>
+            <div class="user-dropdown-menu" id="user-dropdown">
+                <div class="user-dropdown-info">
+                    <img id="dropdown-user-logo" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: none;">
+                    <div class="user-dropdown-name" id="dropdown-user-name">Usuario</div>
+                </div>
+                <a href="admin.html" class="menu-item"><i class="fas fa-home"></i> Mi Panel</a>
+                <a href="perfil.html" class="menu-item"><i class="fas fa-user-circle"></i> Mi Perfil</a>
+                <a href="scanner.html" class="menu-item"><i class="fas fa-barcode"></i> Scanner</a>
+                <a href="#" class="menu-item logout" id="menu-btn-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="authenticated-content" style="display: none; width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 80px;">
+        <div class="admin-header">
+            <a href="admin.html" class="btn btn-secondary" style="margin-bottom: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-arrow-left"></i> Volver al Panel
+            </a>
+            <h1>Productos Deseados</h1>
+            <p>Busca cartas y agrégalas a tu lista de lo que estás buscando.</p>
+        </div>
+
+        <!-- External Card Search -->
+        <div class="album-card" style="max-width: 700px; margin: 0 auto 40px; background: rgba(255,255,255,0.03);">
+            <div class="form-group">
+                <label><i class="fas fa-search"></i> Buscar Cartas (Pokémon / Yu-Gi-Oh)</label>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input type="text" id="deseos-external-search-input" placeholder="Nombre o código de la carta...">
+                    <button id="btn-deseos-external-search" class="btn"><i class="fas fa-search"></i></button>
+                </div>
+                <div id="deseos-external-search-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; max-height: 250px; overflow-y: auto; padding: 10px; border-top: 1px solid #333;">
+                    <!-- Results will appear here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-header">
+            <h2><i class="fas fa-list-ul"></i> Mis Deseos</h2>
+        </div>
+
+        <div id="wishlist-list" class="album-list">
+            <!-- Wishlist items will be loaded here -->
+            <div class="loading">Cargando lista de deseos...</div>
+        </div>
+    </div>
+
+    <!-- Login Modal (Redirects if not logged in) -->
+    <div id="login-modal" class="overlay">
+        <div class="overlay-content">
+            <h1>Acceso Restringido</h1>
+            <p>Por favor, inicia sesión desde el panel principal.</p>
+            <a href="admin.html" class="btn">Ir al Login</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/viking-data.js"></script>
+    <script src="js/deseos.js"></script>
+</body>
+</html>
