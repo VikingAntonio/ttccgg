@@ -1,0 +1,87 @@
+@import "cards/base.css";
+@import "cards/amazing-rare.css";
+@import "cards/basic.css";
+@import "cards/cosmos-holo.css";
+@import "cards/radiant-holo.css";
+@import "cards/rainbow-alt.css";
+@import "cards/rainbow-holo.css";
+@import "cards/regular-holo.css";
+@import "cards/reverse-holo.css";
+@import "cards/secret-rare.css";
+@import "cards/shiny-rare.css";
+@import "cards/shiny-v.css";
+@import "cards/shiny-vmax.css";
+@import "cards/swsh-pikachu.css";
+@import "cards/trainer-full-art.css";
+@import "cards/trainer-gallery-holo.css";
+@import "cards/trainer-gallery-secret-rare.css";
+@import "cards/trainer-gallery-v-max.css";
+@import "cards/trainer-gallery-v-regular.css";
+@import "cards/v-full-art.css";
+@import "cards/v-max.css";
+@import "cards/v-regular.css";
+@import "cards/v-star.css";
+
+.card {
+  --space: 5%;
+  --angle: 133deg;
+  --imgsize: cover;
+
+  --red: #f80e35;
+  --yellow: #eedf10;
+  --green: #21e985;
+  --blue: #0dbde9;
+  --violet: #c929f1;
+
+  --clip: inset( 9.85% 8% 52.85% 8% );
+  --clip-invert: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 47.15%, 91.5% 47.15%, 91.5% 9.85%, 8% 9.85%, 8% 47.15%, 0 50%);
+
+  --clip-stage: polygon(91.5% 9.85%, 57% 9.85%, 54% 12%, 17% 12%, 16% 14%, 12% 16%, 8% 16%, 8% 47.15%, 92% 47.15%);
+  --clip-stage-invert: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 47.15%, 91.5% 47.15%, 91.5% 9.85%, 57% 9.85%, 54% 12%, 17% 12%, 16% 14%, 12% 16%, 8% 16%, 8% 47.15%, 0 50%);
+
+  --clip-trainer: inset(14.5% 8.5% 48.2% 8.5%);
+  --clip-borders: inset(2.8% 4% round 2.55% / 1.5%);
+
+}
+
+.card__shine,
+.card__glare {
+  will-change: transform, opacity, background-image, background-size,
+    background-position, background-blend-mode, filter;
+}
+
+/* Fix for integration with the existing project's 3D cards */
+/* These styles ensure that the Pokemon holographic effects work correctly within the modal */
+#card-3d.card, .card-slot.card {
+  display: grid !important;
+  justify-items: center;
+  align-items: center;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  border-radius: inherit !important;
+  box-shadow: none !important;
+}
+
+#card-3d.card > *, .card-slot.card > * {
+  grid-area: 1/1;
+  width: 100%;
+  height: 100%;
+}
+
+#card-3d.card .card__shine,
+#card-3d.card .card__glare,
+.card-slot.card .card__shine,
+.card-slot.card .card__glare {
+  z-index: 10;
+  pointer-events: none;
+}
+
+#card-3d.card #z-text-container {
+  z-index: 1;
+}
+
+.card-slot.card .tcg-card {
+  z-index: 1;
+  object-fit: cover;
+}
